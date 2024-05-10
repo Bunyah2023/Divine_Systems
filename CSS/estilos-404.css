@@ -1,0 +1,87 @@
+/* Este es el estilo general de la pagina*/
+
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+    color: #fff;
+    overflow: hidden;
+    position: relative;
+}
+
+.contenedor-error {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.texto-error {
+    font-size: 120px;
+    text-align: center;
+    margin-bottom: 20px; /* Espaciado inferior para el mensaje de verificación de URL */
+}
+
+.verificar-url {
+    font-size: 20px;
+    text-align: center;
+}
+/* pequeño logo de la emp */
+.contenedor-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+.logo-pequeno {
+    width: 150px; /* Ancho pequeño */
+    height: auto; /* Altura automática para mantener la proporción */
+    opacity: 0.5; /* Opacidad para simular marca de agua */
+    margin-top: 10px; /* Espacio por encima de la imagen */
+}
+
+/* Esta es la animación de estrellas */
+
+.estrella {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 5px;
+    background-color: rgba(255, 255, 255, 0.5); /* Esta parte sirve para cambiar el color de las estrellas a un transparente */
+    border-radius: 50%; /* Hace las estrellas redondas */
+    animation: brillar 2s linear infinite;
+}
+
+.estrella:nth-child(odd) {
+    animation-delay: 0.2s;
+}
+
+.estrella:nth-child(even) {
+    animation-delay: 0.4s;
+}
+
+@keyframes brillar {
+    0% {
+        opacity: 0.5;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+    100% {
+        opacity: 0.5;
+        transform: scale(1);
+    }
+}
+/* Esta es la animación del astronuata */
+.astronauta {
+    max-width: 200px; /* Tamaño máximo de la imagen */
+    height: auto; /* Altura automática para mantener la proporción */
+    position: absolute; /* Posicionamiento absoluto para animación */
+}
