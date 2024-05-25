@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Mis datos de estudiante son los siguientes</title>
+</head>
+<body>
+<h1>Mi nombre es <strong>Gustavo Javier Hernandez Hernandez</strong></h1>
+<p>Mi carrera es <strong>Desarrollo de software 
+multiplataforma</strong></p>
+<p>Mi correo institucional es 
+<strong>20233tn201@utez.edu.mx</strong></p>
+<p>Mi matricula es <strong>20233tn201</strong></p>
+<p>Mis pasatiempos son <strong>jugar videojuegos y ver peliculas</strong></p>
+<img src="" alt="Diapositiva 1" id="diapositiva-actual" class="imagen">
+<div class="botones">
+<button id="anterior">Anterior</button>
+<button id="siguiente">Siguiente</button>
+</div>
+<script>
+// Arreglo de imágenes
+const imagenes = [
+"IMG/carrusel1.jpg",
+"IMG/carrusel2.jpg",
+"IMG/carrusel3.jpg",
+"IMG/carrusel4.jpg",
+"IMG/carrusel5.jpg"
+];
+let indiceActual = 0;
+// Obtener referencias a los elementos HTML
+const diapositivaActual = document.getElementById("diapositiva-actual");
+const botonAnterior = document.getElementById("anterior");
+const botonSiguiente = document.getElementById("siguiente");
+// Mostrar la primera imagen al cargar la página
+mostrarDiapositiva(indiceActual);
+// Evento click para el botón "Anterior"
+botonAnterior.addEventListener("click", () =>
+mostrarDiapositiva(indiceActual - 1));
+// Evento click para el botón "Siguiente"
+botonSiguiente.addEventListener("click", () =>
+mostrarDiapositiva(indiceActual + 1));
+// Función para mostrar la diapositiva correspondiente al índice
+function mostrarDiapositiva(indice) {
+indice = indice % imagenes.length;
+if (indice < 0) {
+indice = imagenes.length - 1;
+}
+indiceActual = indice;
+diapositivaActual.src = imagenes[indice];
+actualizarBotones();
+}
+"Siguiente"
+function actualizarBotones() {
+botonAnterior.disabled = indiceActual === 0;
+botonSiguiente.disabled = false;
+}
+</script>
+</body>
+</html

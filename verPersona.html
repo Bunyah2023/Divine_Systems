@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Bienvendo usuario</h1>
+    <h1 id="nom"></h1>
+    <h2 id="ape"></h2>
+    <p id="statusContra"></p>
+    <a href="mailto:20233tn215@utez.edu.mx">Correo</a><br>
+    <a href="tel:">Telefono</a>
+     <script>
+        getParameter=(key)=>{
+            address = window.location.search;
+            parameterList=new URLSearchParams(address);
+            return parameterList.get(key);
+        }
+        //console.log(getParameter("usuario"));
+        let nombre=getParameter("nombre");
+        let apelldos= getParameter("apellido");
+        //let contra2 = getParameter("contra2");
+
+        document.getElementById("nombreUsuario").innerText=usuario;
+
+        /*if (contra.length > 5){
+            document.getElementById("statusContra").innerText="Tu contrasena es segura";
+             
+        }else{
+            document.getElementById("statusContra").innerText="Tu contraema es mala";
+        }*/
+     </script>
+    
+</body>
+</html>
