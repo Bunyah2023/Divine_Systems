@@ -1,4 +1,3 @@
-// JavaScript para manejar la visualización de la ventana modal
 document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('modal');
     const addClassBtn = document.getElementById('add-class-btn-span');
@@ -23,5 +22,29 @@ document.addEventListener('DOMContentLoaded', function () {
             modal.style.display = 'none'; // Ocultar la ventana modal
         }
     });
-    
+
+    const hamburgerMenu = document.getElementById('hamburger-menu');
+    const sidebar = document.getElementById('sidebar');
+
+    // Muestra/Oculta la barra lateral al hacer clic en el menú de hamburguesa
+    hamburgerMenu.addEventListener('click', function (event) {
+        event.stopPropagation(); // Evita que el clic se propague al body
+        if (sidebar.style.left === '-250px' || sidebar.style.left === '') {
+            sidebar.style.left = '0';
+        } else {
+            sidebar.style.left = '-250px';
+        }
+    });
+
+    // Cierra la barra lateral al hacer clic fuera de ella
+    document.body.addEventListener('click', function (event) {
+        if (sidebar.style.left === '0px' && !sidebar.contains(event.target) && event.target !== hamburgerMenu) {
+            sidebar.style.left = '-250px';
+        }
+    });
+
+    // Permitir que la barra lateral permanezca abierta al hacer clic dentro de ella
+    sidebar.addEventListener('click', function (event) {
+        event.stopPropagation();
+    });
 });

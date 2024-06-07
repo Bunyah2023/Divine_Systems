@@ -12,7 +12,7 @@ header {
     justify-content: space-between;
     align-items: center;
     padding: 30px 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra añadida */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 header .logo {
@@ -33,7 +33,7 @@ header .fotoPerfil img {
 header .logo span {
     font-size: 18px;
     font-weight: sans-serif;
-    color: #000000; /* Cambiado a negro para mejor visibilidad */
+    color: #000000;
 }
 
 header nav ul {
@@ -48,7 +48,7 @@ header nav ul li {
 }
 
 header nav ul li a {
-    color: #000000; /* Cambiado a negro para mejor visibilidad */
+    color: #000000;
     text-decoration: none;
     font-size: 16px;
 }
@@ -72,10 +72,8 @@ header .right-section .user-info {
     transition: transform 0.3s;
 }
 
-#hamburger-menu {
-    font-size: 24px;
-    cursor: pointer;
-    margin-right: 10px;
+header .right-section .user-info:hover {
+    transform: scale(1.1);
 }
 
 .hamburger-menu {
@@ -83,7 +81,7 @@ header .right-section .user-info {
     flex-direction: column;
     cursor: pointer;
     justify-content: center;
-    margin-right: 1px; /* Espacio entre el menú de hamburguesa y el logo */
+    margin-right: 1px;
 }
 
 .hamburger-menu .bar {
@@ -93,6 +91,7 @@ header .right-section .user-info {
     margin: 4px 0;
     transition: 0.4s;
 }
+
 .sidebar {
     height: 100%;
     width: 250px;
@@ -101,7 +100,7 @@ header .right-section .user-info {
     left: -250px;
     background-color: #000000;
     overflow-x: hidden;
-    transition: left 0.5s; /* Transición suave */
+    transition: left 0.5s;
     padding-top: 60px;
     z-index: 2;
 }
@@ -134,7 +133,6 @@ header .right-section .user-info {
     color: #f1f1f1;
 }
 
-/* Mostrar el menú de hamburguesa en pantallas pequeñas */
 @media screen and (max-width: 768px) {
     .hamburger-menu {
         display: flex;
@@ -145,11 +143,6 @@ header .right-section .user-info {
     }
 }
 
-
-header .right-section .user-info:hover {
-    transform: scale(1.1);
-}
-
 .notifications {
     padding: 5px 10px;
     background-color: #ffc107a4;
@@ -157,99 +150,87 @@ header .right-section .user-info:hover {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 10px 0; /* Reducir espacio de margen */
+    margin: 10px 0;
 }
 
 .notifications .alert {
     margin: 2px 0;
-    text-align: center; /* Asegurar que el texto esté centrado */
+    text-align: center;
 }
 
 main {
-    padding: 5px;
+    padding: 20px;
 }
 
-.learning h1 {
-    font-size: 25px;
-    margin-bottom: 30px;
-    color: #888;
-    display: flex;
-    justify-content: center;
+h1 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #333;
 }
 
-.cursos {
+.profile-settings {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     gap: 20px;
-    flex-wrap: wrap;
+    max-width: 800px;
+    margin: 0 auto;
 }
 
-.curso {
-    background-color: white;
+.profile-photo, .notifications-settings, .password-settings, .language-settings, .visibility-settings {
+    background-color: #fff;
     padding: 20px;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    width: 45%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    transition: transform 0.3s, box-shadow 0.3s; /* Añadida la transición */
 }
 
-.curso:hover {
-    transform: scale(1.05); /* Agrandar ligeramente */
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); /* Sombra añadida */
+.profile-photo img {
+    display: block;
+    max-width: 100px;
+    margin-bottom: 10px;
 }
 
-.curso-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.profile-photo input {
+    display: block;
+    margin-top: 10px;
+}
+
+.notifications-settings label, .visibility-settings label {
+    display: block;
+    margin-top: 10px;
+}
+
+.password-settings input {
+    display: block;
+    width: 100%;
     padding: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+#change-password-btn {
+    background-color: #007bff;
     color: white;
-    border-radius: 5px 5px 0 0;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
 }
 
-.curso.en-progreso .curso-header {
-    background-color: #007bff; /* Azul para cursos en progreso */
+#change-password-btn:hover {
+    background-color: #0056b3;
 }
 
-.curso.terminado .curso-header {
-    background-color: #28a745; /* Verde para cursos terminados exitosamente */
+.language-settings select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 4px;
 }
 
-.curso.incompleto .curso-header {
-    background-color: #dc3545; /* Rojo para cursos terminados de manera incompleta */
-}
-
-.curso h2 {
-    margin: 10px 0;
-}
-
-.curso-content {
-    display: flex;
-    align-items: center;
-}
-
-.curso-icon img {
-    height: 80px;
-    width: 80px;
-    margin-right: 20px;
-}
-
-.curso-details {
-    display: flex;
-    flex-direction: column;
-}
-
-.curso .error {
-    color: #dc3545;
-    font-weight: bold;
-}
-
-/* Estilo para la ventana modal */
 .modal {
-    display: none; /* La ventana modal está oculta por defecto */
+    display: none;
     position: fixed;
     z-index: 1;
     left: 0;
@@ -257,27 +238,24 @@ main {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0, 0, 0, 0.5); /* Fondo semitransparente */
-    backdrop-filter: blur(5px); /* Aplicar efecto de desenfoque */
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
     justify-content: center;
     align-items: center;
-    justify-content: center;
 }
 
-/* Contenedor de la ventana modal */
 .modal-content {
     background-color: #fefefe;
     padding: 20px;
     border: 1px solid #888;
-    max-width: 30%; /* Ancho máximo */
-    max-height: 90%; /* Altura máxima */
+    max-width: 80%;
+    max-height: 80%;
     border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Estilo para el botón de cancelar */
 #cancel-btn {
-    background-color: #f44336; /* Color rojo */
+    background-color: #f44336;
     color: white;
     padding: 10px 20px;
     margin-right: 10px;
@@ -286,9 +264,8 @@ main {
     cursor: pointer;
 }
 
-/* Estilo para el botón de aceptar */
 #accept-btn {
-    background-color: #4caf50; /* Color verde */
+    background-color: #4caf50;
     color: white;
     padding: 10px 20px;
     border: none;
@@ -296,19 +273,32 @@ main {
     cursor: pointer;
 }
 
-/* Media query para dispositivos con ancho de pantalla menor a 768px */
 @media screen and (max-width: 768px) {
     .froid {
         padding: 10px;
     }
 
-    .cursos {
+    .profile-settings {
         flex-direction: column;
         align-items: center;
     }
 
-    .curso {
+    .profile-photo, .notifications-settings, .password-settings, .language-settings, .visibility-settings {
         width: 100%;
     }
 }
 
+#save-changes-btn {
+    background-color: #28a745;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 20px;
+}
+
+#save-changes-btn:hover {
+    background-color: #218838;
+}
