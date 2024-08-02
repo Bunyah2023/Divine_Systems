@@ -1,0 +1,72 @@
+.titulo {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+/* Estilos para la tabla */
+#registroTabla {
+    margin: auto;
+    width: 80%;
+    border-collapse: collapse;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#registroTabla th,
+#registroTabla td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: center;
+}
+
+#registroTabla th {
+    background-color: #f8f9fa;
+    color: #333;
+    font-weight: bold;
+}
+
+#registroTabla tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+#registroTabla tr:hover {
+    background-color: #ddd;
+}
+
+/* Estilos para los botones */
+button.eliminar,
+button.modificar,
+button.guardar {
+    padding: 8px 16px;
+    margin: 4px;
+    cursor: pointer;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+button.eliminar {
+    background-color: #dc3545;
+}
+
+button.modificar {
+    background-color: #007bff;
+}
+
+button.guardar {
+    background-color: #28a745;
+}
+
+/* Efectos hover para los botones */
+button.eliminar:hover {
+    background-color: #c82333;
+}
+
+button.modificar:hover {
+    background-color: #0056b3;
+}
+
+button.guardar:hover {
+    background-color: #218838;
+}
