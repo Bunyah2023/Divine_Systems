@@ -312,5 +312,201 @@ main {
     .curso {
         width: 100%;
     }
-}
 
+    /* Estilo base para el modal */
+    #modal {
+        display: none; /* La ventana modal está oculta por defecto */
+        position: fixed;
+        z-index: 1050; /* Asegura que está sobre otros contenidos */
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.6); /* Fondo semitransparente más oscuro */
+        justify-content: center;
+        align-items: center;
+    }
+
+    /* Contenido de la ventana modal */
+    #modal .modal-content {
+        background-color: #ffffff; /* Fondo blanco */
+        margin: auto;
+        padding: 20px;
+        border: none; /* Sin bordes */
+        width: 50%; /* Ancho relativo al viewport */
+        max-width: 800px; /* Máximo ancho más grande */
+        min-height: 300px; /* Altura mínima para dar espacio */
+        border-radius: 10px; /* Bordes redondeados */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada */
+        display: flex;
+        flex-direction: column; /* Elementos en columna */
+    }
+
+    /* Estilos para formularios dentro del modal */
+    #modal form {
+        display: flex;
+        flex-direction: column; /* Organiza los campos verticalmente */
+        gap: 10px; /* Espacio entre campos */
+    }
+
+    #modal label {
+        margin-bottom: 2px;
+        font-weight: bold;
+        color: #333; /* Color oscuro para texto */
+    }
+
+    #modal input[type="text"],
+    #modal input[type="date"],
+    #modal textarea,
+    #modal input[type="number"] {
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    /* Botones en el modal */
+    #modal .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 10px;
+        width: auto; /* Ajuste automático del ancho */
+    }
+
+    #modal .btn-success {
+        background-color: #4CAF50; /* Verde */
+        color: white;
+    }
+
+    #modal .btn-danger {
+        background-color: #f44336; /* Rojo */
+        color: white;
+    }
+
+    /* Estilos para los controles de calificación */
+    #modal .grades {
+        display: flex;
+        justify-content: space-between; /* Espacia los controles de calificación */
+        flex-wrap: wrap; /* Permite la envoltura de elementos */
+    }
+
+    #modal .grade {
+        display: flex;
+        flex-direction: column; /* Organiza verticalmente los campos dentro de cada bloque de calificación */
+        margin-right: 20px; /* Espacio a la derecha de cada bloque */
+    }
+
+    #modal .grade span {
+        margin-bottom: 5px;
+    }
+
+    #modal .grade input {
+        width: 100%; /* Utiliza todo el ancho disponible */
+    }
+
+    @media (max-width: 768px) {
+        #modal .modal-content {
+            width: 95%; /* Aumenta el ancho en dispositivos más pequeños */
+            padding: 20px; /* Más padding para mejor lectura */
+        }
+    }
+    .cursos {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        padding: 10px;
+    }
+
+    .curso {
+        width: 30%;
+        margin: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .curso:hover {
+        transform: scale(1.05);
+    }
+
+    .curso-header {
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        position: relative;
+    }
+
+    .curso-icon {
+        position: absolute;
+        top: -30px; /* ajustar según el diseño */
+        left: 20px;
+        background: white;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .curso-details {
+        margin-top: 20px;
+    }
+
+    .curso-details p {
+        margin: 5px 0;
+    }
+
+    .clases {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .classroom-block {
+        width: 250px;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        color: #fff;
+        position: relative;
+    }
+
+    .class-info {
+        margin-bottom: 20px;
+    }
+
+    .class-title {
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    .teacher-name {
+        font-size: 14px;
+    }
+
+    .class-footer {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+    }
+
+    .manage, .delete {
+        background: rgba(0,0,0,0.2);
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        width: calc(50% - 4px);
+    }
+
+    .manage:hover, .delete:hover {
+        background: rgba(0,0,0,0.3);
+    }
+
+    .modal {
+        /* Style your modal here */
+    }
+}
