@@ -509,4 +509,48 @@ main {
     .modal {
         /* Style your modal here */
     }
+    /* Contenedor principal */
+    .main-container {
+        display: flex;
+        align-items: start;
+    }
+
+    .class-list {
+        width: 200px; /* Ajusta según necesidades */
+        min-height: 100vh;
+    }
+
+    .class-list ul li a {
+        color: white;
+        text-decoration: none;
+        display: block;
+        padding: 10px;
+    }
+
+    main {
+        flex-grow: 1;
+        padding: 20px;
+        background-color: white;
+    }
+
+    /* Detalles de la clase */
+    .class-details h1, .exam-section h2 {
+        color: #3498db;
+    }
+
+    .class-info p, .exam-list, .exam-results {
+        margin-top: 10px;
+    }
+
+    .btn {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        padding: 10px;
+        cursor: pointer;
+    }
+
+    .btn:hover {
+        background-color: #297cb9;
+    }
 }

@@ -8,10 +8,15 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Date;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ClaseDao {
+    private static final Logger LOGGER = Logger.getLogger(ClaseDao.class.getName());
     private static HikariDataSource dataSource;
 
     static {
@@ -26,7 +31,7 @@ public class ClaseDao {
 
             dataSource = new HikariDataSource(config);
         } catch (Exception e) {
-            e.printStackTrace(); // Puedes usar un logger para registrar errores
+            LOGGER.log(Level.SEVERE, "Error al inicializar la fuente de datos", e);
             throw new RuntimeException("Error al inicializar la fuente de datos", e);
         }
     }
@@ -36,8 +41,8 @@ public class ClaseDao {
         try (Connection con = dataSource.getConnection(); PreparedStatement ps = con.prepareStatement(query)) {
             ps.setString(1, clase.getNombre());
             ps.setString(2, clase.getDescripcion());
-            ps.setDate(3, java.sql.Date.valueOf(clase.getFechaInicio()));
-            ps.setDate(4, java.sql.Date.valueOf(clase.getFechaFin()));
+            ps.setDate(3, Date.valueOf(clase.getFechaInicio()));
+            ps.setDate(4, Date.valueOf(clase.getFechaFin()));
             ps.setDouble(5, clase.getMinAU());
             ps.setDouble(6, clase.getMaxAU());
             ps.setDouble(7, clase.getMinDE());
@@ -51,8 +56,7 @@ public class ClaseDao {
             int result = ps.executeUpdate();
             return result > 0;
         } catch (SQLException e) {
-            System.err.println("Error al crear clase: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error al crear clase", e);
             return false;
         }
     }
@@ -64,39 +68,21 @@ public class ClaseDao {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, correoCreador);
-            ResultSet resultSet = statement.executeQuery();
-
-            while (resultSet.next()) {
-                Clase clase = new Clase(
-                        resultSet.getInt("id"),
-                        resultSet.getString("nombre"),
-                        resultSet.getString("descripcion"),
-                        resultSet.getDate("fecha_inicio").toLocalDate(),
-                        resultSet.getDate("fecha_fin").toLocalDate(),
-                        resultSet.getDouble("minAU"),
-                        resultSet.getDouble("maxAU"),
-                        resultSet.getDouble("minDE"),
-                        resultSet.getDouble("maxDE"),
-                        resultSet.getDouble("minSA"),
-                        resultSet.getDouble("maxSA"),
-                        resultSet.getDouble("minNA"),
-                        resultSet.getDouble("maxNA"),
-                        resultSet.getString("codigo"),
-                        resultSet.getInt("creador")
-                );
-                clases.add(clase);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    Clase clase = extractClaseFromResultSet(resultSet);
+                    clases.add(clase);
+                }
             }
         } catch (SQLException ex) {
-            System.err.println("Error al obtener clases por creador: " + ex.getMessage());
-            ex.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error al obtener clases por creador", ex);
         }
         return clases;
     }
 
-    // Método para unir a un estudiante a una clase
     public boolean unirseClase(int userId, String codigoClase) {
         if (isAlreadyEnrolled(userId, codigoClase)) {
-            System.out.println("El estudiante ya está inscrito en esta clase.");
+            LOGGER.info("El estudiante ya está inscrito en esta clase.");
             return false;
         }
 
@@ -107,8 +93,7 @@ public class ClaseDao {
             int result = ps.executeUpdate();
             return result > 0;
         } catch (SQLException e) {
-            System.err.println("Error al unirse a la clase: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error al unirse a la clase", e);
             return false;
         }
     }
@@ -119,18 +104,17 @@ public class ClaseDao {
              PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setString(2, codigoClase);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1) > 0;
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
             }
         } catch (SQLException e) {
-            System.err.println("Error al verificar inscripción del estudiante: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error al verificar inscripción del estudiante", e);
         }
         return false;
     }
 
-    // Método para obtener clases por estudiante
     public List<Clase> obtenerClasesPorEstudiante(int userId) {
         List<Clase> clases = new ArrayList<>();
         String sql = "SELECT c.* FROM clases c JOIN inscripciones i ON c.id = i.clase_id WHERE i.user_id = ?";
@@ -138,36 +122,54 @@ public class ClaseDao {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, userId);
-            ResultSet resultSet = statement.executeQuery();
-
-            while (resultSet.next()) {
-                Clase clase = new Clase(
-                        resultSet.getInt("id"),
-                        resultSet.getString("nombre"),
-                        resultSet.getString("descripcion"),
-                        resultSet.getDate("fecha_inicio").toLocalDate(),
-                        resultSet.getDate("fecha_fin").toLocalDate(),
-                        resultSet.getDouble("minAU"),
-                        resultSet.getDouble("maxAU"),
-                        resultSet.getDouble("minDE"),
-                        resultSet.getDouble("maxDE"),
-                        resultSet.getDouble("minSA"),
-                        resultSet.getDouble("maxSA"),
-                        resultSet.getDouble("minNA"),
-                        resultSet.getDouble("maxNA"),
-                        resultSet.getString("codigo"),
-                        resultSet.getInt("creador")
-                );
-                clases.add(clase);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    Clase clase = extractClaseFromResultSet(resultSet);
+                    clases.add(clase);
+                }
             }
         } catch (SQLException ex) {
-            System.err.println("Error al obtener clases por estudiante: " + ex.getMessage());
-            ex.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error al obtener clases por estudiante", ex);
         }
         return clases;
     }
 
-    // Método para obtener una clase por código
+    public Clase obtenerClasePorId(int claseId) {
+        String sql = "SELECT * FROM clases WHERE id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, claseId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return extractClaseFromResultSet(resultSet);
+                }
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error al obtener clase por ID", ex);
+        }
+        return null;
+    }
+
+    private Clase extractClaseFromResultSet(ResultSet resultSet) throws SQLException {
+        return new Clase(
+                resultSet.getInt("id"),
+                resultSet.getString("nombre"),
+                resultSet.getString("descripcion"),
+                resultSet.getDate("fecha_inicio").toLocalDate(),
+                resultSet.getDate("fecha_fin").toLocalDate(),
+                resultSet.getDouble("minAU"),
+                resultSet.getDouble("maxAU"),
+                resultSet.getDouble("minDE"),
+                resultSet.getDouble("maxDE"),
+                resultSet.getDouble("minSA"),
+                resultSet.getDouble("maxSA"),
+                resultSet.getDouble("minNA"),
+                resultSet.getDouble("maxNA"),
+                resultSet.getString("codigo"),
+                resultSet.getInt("creador")
+        );
+    }
+
     public Clase obtenerClasePorCodigo(String codigo) {
         Clase clase = null;
         String sql = "SELECT * FROM clases WHERE codigo = ?";
@@ -175,31 +177,31 @@ public class ClaseDao {
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, codigo);
-            ResultSet resultSet = statement.executeQuery();
-
-            if (resultSet.next()) {
-                clase = new Clase(
-                        resultSet.getInt("id"),
-                        resultSet.getString("nombre"),
-                        resultSet.getString("descripcion"),
-                        resultSet.getDate("fecha_inicio").toLocalDate(),
-                        resultSet.getDate("fecha_fin").toLocalDate(),
-                        resultSet.getDouble("minAU"),
-                        resultSet.getDouble("maxAU"),
-                        resultSet.getDouble("minDE"),
-                        resultSet.getDouble("maxDE"),
-                        resultSet.getDouble("minSA"),
-                        resultSet.getDouble("maxSA"),
-                        resultSet.getDouble("minNA"),
-                        resultSet.getDouble("maxNA"),
-                        resultSet.getString("codigo"),
-                        resultSet.getInt("creador")
-                );
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    clase = extractClaseFromResultSet(resultSet);
+                }
             }
         } catch (SQLException ex) {
-            System.err.println("Error al obtener clase por código: " + ex.getMessage());
-            ex.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error al obtener clase por código", ex);
         }
         return clase;
+    }
+
+    public List<Clase> obtenerTodasClases() {
+        List<Clase> clases = new ArrayList<>();
+        String sql = "SELECT * FROM clases";
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            while (resultSet.next()) {
+                Clase clase = extractClaseFromResultSet(resultSet);
+                clases.add(clase);
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error al obtener todas las clases", ex);
+        }
+        return clases;
     }
 }

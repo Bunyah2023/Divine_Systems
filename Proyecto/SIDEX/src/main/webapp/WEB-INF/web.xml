@@ -1,38 +1,69 @@
-<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
-         version="5.0">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-    <!-- Configuración de bienvenida y de la página de inicio -->
-    <welcome-file-list>
-        <welcome-file>index.jsp</welcome-file>
-    </welcome-file-list>
+    <groupId>mx.edu.utez</groupId>
+    <artifactId>SIDEX</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>SIDEX</name>
+    <packaging>war</packaging>
 
-    <!-- Configuración de la sesión -->
-    <session-config>
-        <session-timeout>30</session-timeout>
-    </session-config>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <jakarta.servlet.version>6.0.0</jakarta.servlet.version>
+        <junit.version>5.9.2</junit.version>
+    </properties>
 
-    <!-- Seguridad y autenticación -->
-    <security-constraint>
-        <web-resource-collection>
-            <web-resource-name>Protected Area</web-resource-name>
-            <url-pattern>/secured/*</url-pattern>
-        </web-resource-collection>
-        <auth-constraint>
-            <role-name>estudiante</role-name>
-            <role-name>docente</role-name>
-            <role-name>admin</role-name>
-        </auth-constraint>
-    </security-constraint>
+    <dependencies>
+        <!-- Jakarta Servlet API -->
+        <dependency>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
+            <version>${jakarta.servlet.version}</version>
+            <scope>provided</scope>
+        </dependency>
 
-    <security-role>
-        <role-name>estudiante</role-name>
-    </security-role>
-    <security-role>
-        <role-name>docente</role-name>
-    </security-role>
-    <security-role>
-        <role-name>admin</role-name>
-    </security-role>
-</web-app>
+        <!-- MySQL Connector/J -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>8.0.33</version>
+        </dependency>
+
+        <!-- HikariCP for connection pooling -->
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>5.0.0</version>
+        </dependency>
+
+        <!-- JUnit for testing -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Maven WAR Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.2</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -22,9 +22,7 @@
         <div class="bar"></div>
         <div class="bar"></div>
     </div>
-    <div class="logo">
-        <img src="IMG/DIVINE-SYSTEMS-LOGO.png" alt="DIVINE SYSTEMS">
-        <span> SIDEX </span>
+    <div class="logo">        <img id="logoDIVINESYSTEMS" src="IMG/LOGO SIDEX by DIVINE SYSTEMS.png" alt="DIVINE SYSTEMS" onclick="location.href='index.jsp'">
     </div>
     <nav>
         <ul>

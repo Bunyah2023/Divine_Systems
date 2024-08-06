@@ -16,6 +16,7 @@
         <maven.compiler.source>11</maven.compiler.source>
         <junit.version>5.9.2</junit.version>
     </properties>
+
     <dependencies>
         <dependency>
             <groupId>jakarta.servlet</groupId>
@@ -45,14 +46,17 @@
             <artifactId>HikariCP</artifactId>
             <version>4.0.3</version>
         </dependency>
-
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.3.2</version>
+                <configuration>
+                    <failOnMissingWebXml>false</failOnMissingWebXml> <!-- Opcional, si usas Servlet 3.0+ -->
+                </configuration>
             </plugin>
         </plugins>
     </build>

@@ -19,6 +19,14 @@ public class UnirseClaseServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // Obtener el código de clase del formulario
         String classCodeInput = request.getParameter("classCode");
+
+        // Verificar si el código de clase no es nulo o vacío
+        if (classCodeInput == null || classCodeInput.trim().isEmpty()) {
+            request.setAttribute("errorMessage", "El código de clase no puede estar vacío.");
+            request.getRequestDispatcher("index.jsp").forward(request, response);
+            return;
+        }
+
         // Formatear el código de clase para que coincida con el formato almacenado
         String classCodeFormatted = classCodeInput.replaceAll("(.{3})(?=.)", "$1-").toUpperCase();
 
@@ -31,7 +39,15 @@ public class UnirseClaseServlet extends HttpServlet {
             return;
         }
 
-        ClaseDao claseDao = new ClaseDao();
+        ClaseDao claseDao;
+        try {
+            claseDao = new ClaseDao();
+        } catch (Exception e) {
+            e.printStackTrace(); // Puedes usar un logger para registrar errores
+            request.setAttribute("errorMessage", "Error al acceder a la base de datos. Intenta de nuevo más tarde.");
+            request.getRequestDispatcher("index.jsp").forward(request, response);
+            return;
+        }
 
         // Intentar unirse a la clase con el código proporcionado
         boolean joined = claseDao.unirseClase(user.getId(), classCodeFormatted);

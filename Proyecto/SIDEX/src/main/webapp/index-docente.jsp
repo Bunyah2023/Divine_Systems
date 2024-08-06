@@ -25,7 +25,7 @@
         </ul>
     </div>
     <div class="logo">
-        <img id="logoDIVINESYSTEMS" src="IMG/LOGO SIDEX by DIVINE SYSTEMS.png" alt="DIVINE SYSTEMS">
+        <img id="logoDIVINESYSTEMS" src="IMG/LOGO SIDEX by DIVINE SYSTEMS.png" alt="DIVINE SYSTEMS" onclick="location.href='index-docente.jsp'">
     </div>
     <nav>
         <ul>
@@ -82,7 +82,7 @@
             } else {
                 for (Clase clase : clases) {
             %>
-            <div class="classroom-block">
+            <div class="classroom-block" onclick="location.href='detalleClase.jsp?claseId=<%= clase.getId() %>&role=docente'">
                 <h3><%= clase.getNombre() %></h3>
                 <p><%= clase.getDescripcion() %></p>
                 <p>Código: <%= clase.getCodigo() %></p>

@@ -36,6 +36,10 @@ public class LoginServlet extends HttpServlet {
             System.out.println("Login exitoso para: " + email + ", rol: " + user.getRolId());
 
             switch (user.getRolId()) {
+                case 4: // coordinador
+                    System.out.println("Redirigiendo a index-coordinador.jsp");
+                    resp.sendRedirect("index-coordinador.jsp");
+                    break;
                 case 3: // admin
                     System.out.println("Redirigiendo a index-admin.jsp");
                     resp.sendRedirect("index-admin.jsp");

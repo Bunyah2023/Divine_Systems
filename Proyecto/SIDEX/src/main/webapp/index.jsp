@@ -1,16 +1,16 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="mx.edu.utez.sidex.model.User" %>
-<%@ page import="mx.edu.utez.sidex.dao.ClaseDao" %>
-<%@ page import="mx.edu.utez.sidex.model.Clase" %>
+<%@ page import="mx.edu.utez.sidex.model.User, mx.edu.utez.sidex.dao.ClaseDao, mx.edu.utez.sidex.model.Clase" %>
 <%@ page import="java.util.List" %>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIDEX</title>
+    <title>SIDEX - Panel Principal</title>
     <link rel="stylesheet" href="CSS/bootstrap.css">
     <link rel="stylesheet" href="CSS/index.css">
+
+
     <script src="JS/index.js" defer></script>
 </head>
 <body class="froid">
@@ -25,7 +25,7 @@
         </ul>
     </div>
     <div class="logo">
-        <img id="logoDIVINESYSTEMS" src="IMG/LOGO SIDEX by DIVINE SYSTEMS.png" alt="DIVINE SYSTEMS">
+        <img id="logoDIVINESYSTEMS" src="IMG/LOGO SIDEX by DIVINE SYSTEMS.png" alt="DIVINE SYSTEMS" onclick="location.href='index.jsp'">
     </div>
     <nav>
         <ul>
@@ -42,9 +42,7 @@
         <span class="icon">🔔</span>
         <span id="add-class-btn-span" class="icon">+</span>
         <div class="fotoPerfil">
-            <%
-                String perfilLink = (session.getAttribute("user") != null) ? "configurar_perfil.jsp" : "login.jsp";
-            %>
+            <% String perfilLink = (session.getAttribute("user") != null) ? "configurar_perfil.jsp" : "login.jsp"; %>
             <a href="<%= perfilLink %>">
                 <img src="IMG/PICTURE_PROFILE_DEFAULT.png" alt="Foto de perfil" class="user-info">
             </a>
@@ -87,10 +85,21 @@
         <h2>Tus Clases</h2>
         <%
             ClaseDao claseDao = new ClaseDao();
-            List<Clase> clases = claseDao.obtenerClasesPorEstudiante(user.getId());
+            List<Clase> clases;
+            String detalleClaseLink;
+
+            // Determinar el tipo de usuario basado en alguna lógica (por ejemplo, usando su correo)
+            if (user.getCorreo().endsWith("@docente.edu")) { // Suponiendo que los correos de docentes terminan con @docente.edu
+                clases = claseDao.obtenerClasesPorCreador(user.getCorreo());
+                detalleClaseLink = "detalleClaseDocente.jsp";
+            } else {
+                clases = claseDao.obtenerClasesPorEstudiante(user.getId());
+                detalleClaseLink = "detalleClase.jsp";
+            }
+
             for (Clase clase : clases) {
         %>
-        <div class="curso" onclick="location.href='detalleClase.jsp?claseId=<%= clase.getId() %>'">
+        <div class="curso" onclick="location.href='<%= detalleClaseLink %>?claseId=<%= clase.getId() %>'">
             <div class="curso-header" style="background-color: #3498db;">
                 <span class="curso-icon"><img src="IMG/course-icon.png" alt="Icon"></span>
                 <h3><%= clase.getNombre() %></h3>
@@ -135,11 +144,9 @@
         btn.onclick = function () {
             modal.style.display = 'block';
         };
-
         span.onclick = function () {
             modal.style.display = 'none';
         };
-
         window.onclick = function (event) {
             if (event.target == modal) {
                 modal.style.display = 'none';
