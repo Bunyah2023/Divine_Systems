@@ -28,7 +28,7 @@ public class UnirseClaseServlet extends HttpServlet {
         }
 
         // Formatear el código de clase para que coincida con el formato almacenado
-        String classCodeFormatted = classCodeInput.replaceAll("(.{3})(?=.)", "$1-").toUpperCase();
+        String classCodeFormatted = classCodeInput.trim().toUpperCase(); // No formatear aquí, solo normalizar el código
 
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
@@ -39,7 +39,7 @@ public class UnirseClaseServlet extends HttpServlet {
             return;
         }
 
-        ClaseDao claseDao;
+        ClaseDao claseDao = null;
         try {
             claseDao = new ClaseDao();
         } catch (Exception e) {

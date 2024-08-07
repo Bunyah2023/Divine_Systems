@@ -53,7 +53,7 @@
                         <option value="false" <%=!u.isEstado() ? "selected" : ""%>>Inactivo</option>
                     </select>
                 </td>
-                <td><button type="button" class="btn btn-warning edit-btn">Modificar</button></td>
+                <td><a href="verregistro?id=<%=u.getId()%>" class="btn btn-warning edit-btn">Modificar</a></td>
             </form>
             <td><button type="button" class="btn btn-danger delete-btn" data-id="<%=u.getId()%>">Eliminar</button></td>
         </tr>

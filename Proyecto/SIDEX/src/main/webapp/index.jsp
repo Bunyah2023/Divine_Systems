@@ -9,8 +9,6 @@
     <title>SIDEX - Panel Principal</title>
     <link rel="stylesheet" href="CSS/bootstrap.css">
     <link rel="stylesheet" href="CSS/index.css">
-
-
     <script src="JS/index.js" defer></script>
 </head>
 <body class="froid">
@@ -42,7 +40,9 @@
         <span class="icon">🔔</span>
         <span id="add-class-btn-span" class="icon">+</span>
         <div class="fotoPerfil">
-            <% String perfilLink = (session.getAttribute("user") != null) ? "configurar_perfil.jsp" : "login.jsp"; %>
+            <%
+                String perfilLink = (session.getAttribute("user") != null) ? "configurar_perfil.jsp" : "login.jsp";
+            %>
             <a href="<%= perfilLink %>">
                 <img src="IMG/PICTURE_PROFILE_DEFAULT.png" alt="Foto de perfil" class="user-info">
             </a>
@@ -52,15 +52,13 @@
 
 <main>
     <div class="notifications">
-        <div class="alert" id="netacad-maintenance">
-            <%
-                User user = (User) session.getAttribute("user");
-                if (user != null) {
-                    String nombre = user.getNombres();
-                    String primerNombre = nombre.contains(" ") ? nombre.substring(0, nombre.indexOf(" ")) : nombre;
-                    out.print("Bienvenido a SIDEX, " + primerNombre);
-            %>
-        </div>
+        <%
+            User user = (User) session.getAttribute("user");
+            if (user != null) {
+                String nombre = user.getNombres();
+                String primerNombre = nombre.contains(" ") ? nombre.substring(0, nombre.indexOf(" ")) : nombre;
+        %>
+        <div class="alert" id="netacad-maintenance">Bienvenido a SIDEX, <%= primerNombre %></div>
         <div class="alert" id="skillsforall-maintenance">¡Un buen estudiante no descuida sus deberes!</div>
         <div class="alert" id="current-date"></div>
 
@@ -116,8 +114,10 @@
         %>
     </section>
     <%
-        } else {
-            out.print("Por favor, inicia sesión para ver tus clases.");
+    } else {
+    %>
+    <div class="alert alert-warning">Por favor, inicia sesión para ver tus clases.</div>
+    <%
         }
     %>
     </div>
@@ -135,6 +135,7 @@
         </form>
     </div>
 </div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const modal = document.getElementById('modal');
@@ -148,11 +149,12 @@
             modal.style.display = 'none';
         };
         window.onclick = function (event) {
-            if (event.target == modal) {
+            if (event.target === modal) {
                 modal.style.display = 'none';
             }
         };
     });
 </script>
+
 </body>
 </html>

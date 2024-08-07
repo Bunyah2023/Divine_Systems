@@ -13,6 +13,17 @@
             font-size: 0.9em;
             margin-bottom: 15px;
         }
+        .register-link {
+            margin-top: 15px;
+            text-align: center;
+        }
+        .register-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .register-link a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -48,6 +59,11 @@
                 %>
 
                 <button type="submit">Iniciar ahora</button>
+
+                <!-- Enlace para registrarse -->
+                <div class="register-link">
+                    <p>¿No tienes una cuenta? <a href="registrar.jsp">Regístrate aquí</a></p>
+                </div>
             </form>
         </div>
     </div>

@@ -24,23 +24,35 @@
     <div class="register-container">
         <h1>SIDEX - Registro</h1>
         <form id="registroForm" action="registrar" method="post" onsubmit="return validarContrasenas()">
-            <label for="nombres">Nombre(s):</label>
-            <input type="text" id="nombres" name="nombres" required><br>
+            <div class="form-group">
+                <label for="nombres">Nombre(s):</label>
+                <input type="text" id="nombres" name="nombres" required>
+            </div>
 
-            <label for="apellido">Apellido:</label>
-            <input type="text" id="apellido" name="apellido" required><br>
+            <div class="form-group">
+                <label for="apellido">Apellido:</label>
+                <input type="text" id="apellido" name="apellido" required>
+            </div>
 
-            <label for="apellidoMaterno">Apellido Materno:</label>
-            <input type="text" id="apellidoMaterno" name="apellidoMaterno" required><br>
+            <div class="form-group">
+                <label for="apellidoMaterno">Apellido Materno:</label>
+                <input type="text" id="apellidoMaterno" name="apellidoMaterno" required>
+            </div>
 
-            <label for="correo">Correo institucional:</label>
-            <input type="email" id="correo" name="correo" required><br>
+            <div class="form-group">
+                <label for="correo">Correo institucional:</label>
+                <input type="email" id="correo" name="correo" required>
+            </div>
 
-            <label for="contrasena">Crear contraseña:</label>
-            <input type="password" id="contrasena" name="contrasena" required><br>
+            <div class="form-group">
+                <label for="contrasena">Crear contraseña:</label>
+                <input type="password" id="contrasena" name="contrasena" required>
+            </div>
 
-            <label for="repetirContrasena">Repetir contraseña:</label>
-            <input type="password" id="repetirContrasena" name="repetirContrasena" required><br>
+            <div class="form-group">
+                <label for="repetirContrasena">Repetir contraseña:</label>
+                <input type="password" id="repetirContrasena" name="repetirContrasena" required>
+            </div>
 
             <!-- Mensajes de error y éxito -->
             <%
@@ -48,7 +60,11 @@
                 if (registerMessage != null) {
                     String messageType = (String) session.getAttribute("messageType");
             %>
-            <div><span style="color: <%= "error".equals(messageType) ? "red" : "green" %>;"><%= registerMessage %></span></div>
+            <div class="message">
+                    <span style="color: <%= "error".equals(messageType) ? "red" : "green" %>;">
+                        <%= registerMessage %>
+                    </span>
+            </div>
             <%
                     session.removeAttribute("registerMessage");
                     session.removeAttribute("messageType");

@@ -2,12 +2,12 @@ package mx.edu.utez.sidex.controller;
 
 import mx.edu.utez.sidex.dao.UserDao;
 import mx.edu.utez.sidex.model.User;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.util.List;
@@ -22,27 +22,14 @@ public class UserServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String action = request.getParameter("action");
-        if (action == null) {
-            action = "";
-        }
-
-        try {
-            switch (action) {
-                case "edit":
-                    showEditForm(request, response);
-                    break;
-                case "delete":
-                    deleteUser(request, response);
-                    break;
-                default:
-                    listUsers(request, response);
-                    break;
-            }
-        } catch (Exception e) {
-            throw new ServletException("Error al procesar la solicitud: " + e.getMessage(), e);
-        }
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        //Porque estamos mandando un "?" es una request GET
+        int id = Integer.parseInt(req.getParameter("id"));
+        UserDao dao = new UserDao();
+        User usuario = dao.getOne1(id);
+        HttpSession sesion = req.getSession();
+        sesion.setAttribute("usuario", usuario);
+        resp.sendRedirect("modificar.jsp");
     }
 
     @Override
@@ -78,8 +65,9 @@ public class UserServlet extends HttpServlet {
     private void showEditForm(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         int id = Integer.parseInt(request.getParameter("id"));
         User existingUser = userDao.getOneById(id);
-        request.setAttribute("user", existingUser);
-        request.getRequestDispatcher("user-form.jsp").forward(request, response);
+        HttpSession session = request.getSession();
+        session.setAttribute("usuario", existingUser);
+        response.sendRedirect("modificar.jsp");
     }
 
     private void updateUser(HttpServletRequest request, HttpServletResponse response) throws IOException {

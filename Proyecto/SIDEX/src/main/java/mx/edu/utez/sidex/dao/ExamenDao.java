@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import mx.edu.utez.sidex.model.Examen;
 import mx.edu.utez.sidex.model.Pregunta;
+import mx.edu.utez.sidex.model.Resultado;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -343,4 +344,33 @@ public class ExamenDao {
         }
         return examenes;
     }
+
+    public List<Resultado> obtenerResultados(int examenId) {
+        List<Resultado> resultados = new ArrayList<>();
+        String sql = "SELECT * FROM resultados WHERE examen_id = ?";
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, examenId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    resultados.add(new Resultado(
+                            rs.getInt("estudiante_id"),
+                            rs.getString("estudiante_nombre"),
+                            rs.getDouble("calificacion"),
+                            rs.getInt("aciertos"),
+                            rs.getInt("total_preguntas"), // Assuming total_preguntas exists in your database
+                            rs.getInt("respuestas_incorrectas"),
+                            examenId,
+                            rs.getBoolean("aprobado")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener los resultados por examen: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return resultados;
+    }
 }
+
+

@@ -33,6 +33,10 @@ public class User {
         this.estado = true; // Por defecto, asumimos que el usuario es activo
     }
 
+    public User() {
+
+    }
+
     // Getters y setters
     public int getId() {
         return id;

@@ -96,8 +96,31 @@ public class UserDao {
     }
 
     // Método para actualizar un usuario
+    public User getOne1(int id) {
+        User u = new User();
+        String query = "select * from users where id = ?";
+        try {
+            Connection con = DatabaseConnectionManager.getConnection();
+            PreparedStatement ps = con.prepareStatement(query);
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                u.setNombres(rs.getString("nombres"));
+                u.setApellido(rs.getString("apellido"));
+                u.setApellidoMaterno(rs.getString("apellidoMaterno"));
+                u.setContra(rs.getString("contra"));
+                u.setCorreo(rs.getString("correo"));
+                u.setId(rs.getInt("id"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return u;
+    }
+
+    // Método para actualizar un usuario
     public boolean update(User user) {
-        String sql = "UPDATE users SET nombres = ?, apellido = ?, apellidoMaterno = ?, correo = ?, contra = ?, rol_id = ?, estado = ? WHERE id = ?";
+        String sql = "UPDATE users SET nombres = ?, apellido = ?, apellidoMaterno = ?, correo = ?, contra = ? WHERE id = ?";
         try (Connection connection = DatabaseConnectionManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
@@ -106,10 +129,7 @@ public class UserDao {
             statement.setString(3, user.getApellidoMaterno());
             statement.setString(4, user.getCorreo());
             statement.setString(5, user.getContra()); // Asegúrate de encriptar la contraseña si fue actualizada
-            statement.setInt(6, user.getRolId());
-            statement.setBoolean(7, user.isEstado());
-            statement.setInt(8, user.getId());
-
+            statement.setInt(6, user.getId());
             int rowsUpdated = statement.executeUpdate();
             return rowsUpdated > 0;
 
@@ -118,7 +138,6 @@ public class UserDao {
             return false;
         }
     }
-
     // Método para eliminar un usuario
     public boolean delete(int userId) {
         String sql = "DELETE FROM users WHERE id = ?";
