@@ -3,6 +3,7 @@ package mx.edu.utez.sidex.controller;
 import mx.edu.utez.sidex.dao.ExamenDao;
 import mx.edu.utez.sidex.model.Examen;
 import mx.edu.utez.sidex.model.Pregunta;
+import mx.edu.utez.sidex.model.User;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -10,11 +11,10 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+
 import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @WebServlet("/crearExamen")
@@ -22,60 +22,44 @@ public class CrearExamenServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String action = request.getParameter("action");
-        if (action == null) {
-            action = "tempSave"; // Acción predeterminada si no se especifica
-        }
-
-        switch (action) {
-            case "tempSave":
-                guardarTemporalmente(request, response);
-                break;
-            case "confirm":
-                confirmarExamen(request, response);
-                break;
-            default:
-                response.sendRedirect("error.jsp"); // Página de error si la acción no es reconocida
-        }
-    }
-
-    private void guardarTemporalmente(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-        Examen examen;
-        try {
-            examen = extraerDatosExamen(request);
-        } catch (ServletException e) {
-            request.getSession().setAttribute("errorMessage", e.getMessage());
-            response.sendRedirect("crearExamen.jsp");
-            return;
-        }
+        System.out.println("Iniciando proceso de creación de examen...");
 
         HttpSession session = request.getSession();
-        session.setAttribute("examenTemporal", examen);
-        List<Pregunta> preguntas = recogerPreguntas(request, 0); // Usar ID de examen temporal como 0
-        session.setAttribute("preguntasTemporales", preguntas);
-        response.sendRedirect("editarExamen.jsp"); // Página para editar el examen temporalmente guardado
-    }
+        User usuario = (User) session.getAttribute("user");
 
-    private void confirmarExamen(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        HttpSession session = request.getSession();
-        Examen examen = (Examen) session.getAttribute("examenTemporal");
-        List<Pregunta> preguntas = (List<Pregunta>) session.getAttribute("preguntasTemporales");
+        if (usuario != null && usuario.getRolId() == 4) { // Verifica que el usuario es coordinador
+            System.out.println("Usuario autenticado como coordinador: " + usuario.getNombres());
 
-        if (examen != null && preguntas != null) {
+            Examen examen;
+            try {
+                examen = extraerDatosExamen(request);
+            } catch (ServletException e) {
+                session.setAttribute("errorMessage", e.getMessage());
+                response.sendRedirect("crearExamen.jsp");
+                return;
+            }
+
+            List<Pregunta> preguntas = recogerPreguntas(request);
+
             ExamenDao examenDao = new ExamenDao();
             boolean creado = examenDao.crearExamen(examen, preguntas);
+
             if (creado) {
-                session.removeAttribute("examenTemporal"); // Limpiar la sesión después de guardar definitivamente
-                session.removeAttribute("preguntasTemporales");
-                session.setAttribute("message", "Examen creado con éxito.");
-                response.sendRedirect("almacenExamenes.jsp");
+                System.out.println("Examen creado exitosamente: " + examen.getTitulo());
+                session.setAttribute("registerMessage", "Examen creado con éxito.");
+                session.setAttribute("messageType", "success");
             } else {
-                session.setAttribute("errorMessage", "Error al crear el examen.");
-                response.sendRedirect("crearExamen.jsp"); // Volver a la página de creación si hay error
+                System.out.println("Error al crear el examen: " + examen.getTitulo());
+                session.setAttribute("registerMessage", "Error al crear el examen.");
+                session.setAttribute("messageType", "error");
             }
+
+            response.sendRedirect("index-coordinador.jsp");
+
         } else {
-            session.setAttribute("errorMessage", "No se encontró el examen temporal en la sesión.");
-            response.sendRedirect("crearExamen.jsp"); // Volver a la página de creación si no se encuentra el examen
+            System.out.println("Acceso denegado: El usuario no es coordinador o no está autenticado.");
+            session.setAttribute("errorMessage", "No tienes permiso para crear exámenes.");
+            response.sendRedirect("acceso_denegado.jsp");
         }
     }
 
@@ -83,21 +67,41 @@ public class CrearExamenServlet extends HttpServlet {
         try {
             String titulo = request.getParameter("titulo");
             String descripcion = request.getParameter("descripcion");
+            String materia = request.getParameter("materia"); // Asegúrate de que este valor no sea nulo o vacío
 
-            // Asegúrate de que las fechas no sean null antes de intentar parsearlas
-            String startDateStr = request.getParameter("fechaApertura");
-            String endDateStr = request.getParameter("fechaCierre");
-            Date startDate = null;
-            Date endDate = null;
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
+            // Verifica que materia no sea nulo ni vacío
+            if (materia == null || materia.trim().isEmpty()) {
+                throw new ServletException("El campo materia no puede estar vacío.");
+            }
+
+            // Otros parámetros y procesamiento...
+            String startDateStr = request.getParameter("fechaHoraApertura");
+            String endDateStr = request.getParameter("fechaHoraCierre");
+            Timestamp startDate = null;
+            Timestamp endDate = null;
+
             if (startDateStr != null && !startDateStr.isEmpty()) {
-                startDate = dateFormat.parse(startDateStr);
-            }
-            if (endDateStr != null && !endDateStr.isEmpty()) {
-                endDate = dateFormat.parse(endDateStr);
+                try {
+                    startDate = Timestamp.valueOf(startDateStr.replace("T", " ") + ":00");
+                    System.out.println("Fecha y hora de apertura procesada: " + startDate);
+                } catch (IllegalArgumentException e) {
+                    throw new ServletException("Error en el formato de la fecha y hora de apertura.", e);
+                }
+            } else {
+                throw new ServletException("La fecha y hora de apertura no puede estar vacía.");
             }
 
-            String materia = request.getParameter("materia");
+            if (endDateStr != null && !endDateStr.isEmpty()) {
+                try {
+                    endDate = Timestamp.valueOf(endDateStr.replace("T", " ") + ":00");
+                    System.out.println("Fecha y hora de cierre procesada: " + endDate);
+                } catch (IllegalArgumentException e) {
+                    throw new ServletException("Error en el formato de la fecha y hora de cierre.", e);
+                }
+            } else {
+                throw new ServletException("La fecha y hora de cierre no puede estar vacía.");
+            }
+
             Integer intentos = null;
             String intentosStr = request.getParameter("intentos");
             if (intentosStr != null && !intentosStr.isEmpty()) {
@@ -108,57 +112,70 @@ public class CrearExamenServlet extends HttpServlet {
                 }
             }
 
-            // Se asume que no se necesita el campo claseId
-            return new Examen(0, titulo, startDate, endDate, null, null, 0, descripcion, "pendiente", 0.0, 0.0, materia, intentos, false);
-        } catch (ParseException e) {
+            System.out.println("Datos extraídos del examen: " + titulo + ", Fecha y Hora Apertura: " + startDate + ", Fecha y Hora Cierre: " + endDate + ", Materia: " + materia);
+
+            return new Examen(0, titulo, null, null, startDate, endDate, 0, descripcion, "pendiente", 0.0, 0.0, materia, intentos, false);
+        } catch (IllegalArgumentException e) {
             throw new ServletException("Error al parsear las fechas del examen.", e);
         }
     }
 
-    private List<Pregunta> recogerPreguntas(HttpServletRequest request, int examenId) {
+
+    private List<Pregunta> recogerPreguntas(HttpServletRequest request) {
         List<Pregunta> preguntas = new ArrayList<>();
-        for (int i = 1; i <= 30; i++) {
-            String texto = request.getParameter("pregunta" + i);
-            if (texto != null && !texto.isEmpty()) {
-                String opcion1 = request.getParameter("opcion" + i + "1");
-                String opcion2 = request.getParameter("opcion" + i + "2");
-                String opcion3 = request.getParameter("opcion" + i + "3");
-                String opcion4 = request.getParameter("opcion" + i + "4");
-                int respuestaCorrecta;
+        String[] textosPreguntas = request.getParameterValues("pregunta");
+        int cantidadPreguntas = textosPreguntas != null ? textosPreguntas.length : 0;
+
+        for (int i = 0; i < cantidadPreguntas; i++) {
+            String opcion1 = request.getParameter("opcion" + (i + 1) + "_1");
+            String opcion2 = request.getParameter("opcion" + (i + 1) + "_2");
+            String opcion3 = request.getParameter("opcion" + (i + 1) + "_3");
+            String opcion4 = request.getParameter("opcion" + (i + 1) + "_4");
+            String correctaStr = request.getParameter("correcta" + (i + 1));
+
+            int respuestaCorrecta = 1; // valor predeterminado en caso de que no se reciba correctaStr
+            if (correctaStr != null) {
                 try {
-                    respuestaCorrecta = Integer.parseInt(request.getParameter("correcta" + i));
+                    respuestaCorrecta = Integer.parseInt(correctaStr);
                 } catch (NumberFormatException e) {
-                    respuestaCorrecta = 0; // Valor predeterminado si el número no es válido
+                    // En caso de que no se pueda convertir a número, usar el valor por defecto
                 }
-                preguntas.add(new Pregunta(texto, opcion1, opcion2, opcion3, opcion4, respuestaCorrecta, examenId));
             }
+
+            // Verificar que las opciones no sean nulas o vacías
+            if (opcion1 == null || opcion1.trim().isEmpty()) {
+                opcion1 = "Opción 1 no especificada";
+            }
+            if (opcion2 == null || opcion2.trim().isEmpty()) {
+                opcion2 = "Opción 2 no especificada";
+            }
+            if (opcion3 == null || opcion3.trim().isEmpty()) {
+                opcion3 = "Opción 3 no especificada";
+            }
+            if (opcion4 == null || opcion4.trim().isEmpty()) {
+                opcion4 = "Opción 4 no especificada";
+            }
+
+            // Ahora creamos la pregunta con las opciones recogidas
+            preguntas.add(new Pregunta(textosPreguntas[i], opcion1, opcion2, opcion3, opcion4, respuestaCorrecta, 0));
+
+            // Imprimir para depurar
+            System.out.println("Pregunta recogida: " + textosPreguntas[i] +
+                    " | Opciones: [" + opcion1 + ", " + opcion2 + ", " + opcion3 + ", " + opcion4 + "] | Respuesta Correcta: " + respuestaCorrecta);
         }
+
+        System.out.println("Total de preguntas recogidas: " + preguntas.size());
         return preguntas;
     }
-
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        doPost(request, response);
-    }
-
-    @Override
-    protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String examenIdStr = request.getParameter("examenId");
-        int examenId = examenIdStr != null && !examenIdStr.isEmpty() ? Integer.parseInt(examenIdStr) : 0;
-
-        if (examenId > 0) {
-            ExamenDao examenDao = new ExamenDao();
-            boolean eliminado = examenDao.eliminarExamen(examenId);
-
-            if (eliminado) {
-                request.getSession().setAttribute("message", "Examen eliminado exitosamente.");
-            } else {
-                request.getSession().setAttribute("errorMessage", "Error al eliminar el examen.");
-            }
-        } else {
-            request.getSession().setAttribute("errorMessage", "ID de examen inválido.");
-        }
-
-        response.sendRedirect("almacenExamenes.jsp");
-    }
 }
+
+
+
+
+
+
+
+
+
+
+

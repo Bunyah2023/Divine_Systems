@@ -5,14 +5,13 @@
 <%@ page import="java.util.List" %>
 
 <%
-    // Verificación de acceso para usuarios activos y con rol_id=4
+    // Verificación de acceso para usuarios activos y con rol_id=4 (Coordinador)
     User usuario = (User) session.getAttribute("user");
-    if (usuario == null || !usuario.isEstado() || usuario.getRolId() != 4) { // Verifica si el usuario es nulo, está inactivo o no tiene rol_id=4
+    if (usuario == null || !usuario.isEstado() || usuario.getRolId() != 4) {
         response.sendRedirect("acceso_denegado.jsp");
         return;
     }
 %>
-
 
 <!DOCTYPE html>
 <html lang="es">
@@ -63,13 +62,12 @@
     </div>
     <br>
 
-    <div id="modal" class="modal">
+    <div id="modal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close">&times;</span>
             <br>
             <h2>Crear Nuevo Examen</h2>
             <form id="create-exam-form" action="crearExamen" method="post">
-                <!-- Formulario de creación de examen -->
                 <input type="hidden" name="action" value="confirm">
                 <div class="form-group">
                     <label for="exam-title">Título del examen:</label>
@@ -84,12 +82,12 @@
                     <input type="text" id="materia" name="materia" required>
                 </div>
                 <div class="form-group">
-                    <label for="fechaApertura">Fecha de Apertura:</label>
-                    <input type="datetime-local" id="fechaApertura" name="fechaApertura" required>
+                    <label for="fechaHoraApertura">Fecha y Hora de Apertura:</label>
+                    <input type="datetime-local" id="fechaHoraApertura" name="fechaHoraApertura">
                 </div>
                 <div class="form-group">
-                    <label for="fechaCierre">Fecha de Cierre:</label>
-                    <input type="datetime-local" id="fechaCierre" name="fechaCierre" required>
+                    <label for="fechaHoraCierre">Fecha y Hora de Cierre:</label>
+                    <input type="datetime-local" id="fechaHoraCierre" name="fechaHoraCierre">
                 </div>
                 <div class="form-group">
                     <label for="intentos">Número de Intentos:</label>
@@ -136,7 +134,7 @@
             if (busqueda != null && !busqueda.trim().isEmpty()) {
                 examenes = examenDao.buscarExamenesPorNombre(busqueda, orden);
             } else {
-                examenes = examenDao.obtenerExamenes(orden);
+                examenes = examenDao.obtenerExamenes("", "", "", "", "", orden);
             }
 
             if (examenes != null && !examenes.isEmpty()) {
@@ -244,30 +242,31 @@
         const addQuestionBtn = document.getElementById('add-question-btn');
         const questionsContainer = document.getElementById('questions-container');
         let questionCount = 0;
-        const maxQuestions = 30; // Ajusta según sea necesario
+        const maxQuestions = 30;
 
         addQuestionBtn.addEventListener('click', function() {
             if (questionCount < maxQuestions) {
                 questionCount++;
                 const newQuestionHTML = `
-                    <div class="question">
-                        <label for="question${questionCount}">Pregunta ${questionCount}:</label>
-                        <textarea id="question${questionCount}" name="pregunta${questionCount}" placeholder="Escribe la pregunta aquí" required></textarea>
-                        <label>Opciones:</label>
-                        <input type="text" name="opcion${questionCount}1" placeholder="Opción 1" required>
-                        <input type="text" name="opcion${questionCount}2" placeholder="Opción 2" required>
-                        <input type="text" name="opcion${questionCount}3" placeholder="Opción 3" required>
-                        <input type="text" name="opcion${questionCount}4" placeholder="Opción 4" required>
-                        <label for="correct${questionCount}">Respuesta Correcta:</label>
-                        <select name="correcta${questionCount}" required>
-                            <option value="1">Opción 1</option>
-                            <option value="2">Opción 2</option>
-                            <option value="3">Opción 3</option>
-                            <option value="4">Opción 4</option>
-                        </select>
-                    </div>
-                `;
+                <div class="question">
+                    <label for="pregunta${questionCount}">Pregunta ${questionCount}:</label>
+                    <textarea id="pregunta${questionCount}" name="pregunta${questionCount}" placeholder="Escribe la pregunta aquí" required></textarea>
+                    <label>Opciones:</label>
+                    <input type="text" id="opcion${questionCount}1" name="opcion${questionCount}1" placeholder="Opción 1" required>
+                    <input type="text" id="opcion${questionCount}2" name="opcion${questionCount}2" placeholder="Opción 2" required>
+                    <input type="text" id="opcion${questionCount}3" name="opcion${questionCount}3" placeholder="Opción 3" required>
+                    <input type="text" id="opcion${questionCount}4" name="opcion${questionCount}4" placeholder="Opción 4" required>
+                    <label for="correcta${questionCount}">Respuesta Correcta:</label>
+                    <select id="correcta${questionCount}" name="correcta${questionCount}" required>
+                        <option value="1">Opción 1</option>
+                        <option value="2">Opción 2</option>
+                        <option value="3">Opción 3</option>
+                        <option value="4">Opción 4</option>
+                    </select>
+                </div>`;
                 questionsContainer.insertAdjacentHTML('beforeend', newQuestionHTML);
+            } else {
+                console.log("Se ha alcanzado el número máximo de preguntas.");
             }
         });
     });
@@ -275,5 +274,10 @@
 
 </body>
 </html>
+
+
+
+
+
 
 

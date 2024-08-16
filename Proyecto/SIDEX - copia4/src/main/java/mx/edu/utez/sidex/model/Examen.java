@@ -8,8 +8,8 @@ public class Examen {
     private String titulo;
     private Date fechaApertura;
     private Date fechaCierre;
-    private Date fechaHoraApertura; // Nuevo campo
-    private Date fechaHoraCierre;   // Nuevo campo
+    private Date fechaHoraApertura;
+    private Date fechaHoraCierre;
     private int claseId;
     private String descripcion;
     private String estado;
@@ -19,6 +19,7 @@ public class Examen {
     private Integer intentos;
     private boolean aprobadoPorDocente; // Nuevo campo
     private int creadorId;
+
 
     // Constructor completo
     public Examen(int id, String titulo, Date fechaApertura, Date fechaCierre, Date fechaHoraApertura, Date fechaHoraCierre, int claseId, String descripcion, String estado, double calificacion, double mejorCalificacion, String materia, Integer intentos, boolean aprobadoPorDocente) {
@@ -77,6 +78,8 @@ public class Examen {
         this.creadorId = creadorId;
     }
 
+    public Examen(int i, String titulo, Timestamp startDate, Timestamp endDate, String descripcion, String pendiente, double v, double v1, String materia, Integer intentos, boolean b) {
+    }
 
 
     // Getters and Setters
@@ -112,16 +115,12 @@ public class Examen {
         this.fechaCierre = fechaCierre;
     }
 
-    public Date getFechaHoraApertura() {
-        return fechaHoraApertura;
+    public Timestamp getFechaHoraApertura() {
+        return fechaHoraApertura != null ? new Timestamp(fechaHoraApertura.getTime()) : null;
     }
 
-    public void setFechaHoraApertura(Date fechaHoraApertura) {
-        this.fechaHoraApertura = fechaHoraApertura;
-    }
-
-    public Date getFechaHoraCierre() {
-        return fechaHoraCierre;
+    public Timestamp getFechaHoraCierre() {
+        return fechaHoraCierre != null ? new Timestamp(fechaHoraCierre.getTime()) : null;
     }
 
     public void setFechaHoraCierre(Date fechaHoraCierre) {

@@ -57,6 +57,7 @@
     <form action="editarExamen" method="post">
         <input type="hidden" name="examenId" value="<%= examenId %>">
         <input type="hidden" name="claseId" value="<%= examen.getClaseId() %>">
+        <input type="hidden" name="rolId" value="<%= user.getRolId() %>"> <!-- Campo oculto para el rol del usuario -->
 
         <!-- Mostrar detalles del examen -->
         <div class="form-group">
@@ -135,6 +136,4 @@
 </div>
 </body>
 </html>
-
-
 

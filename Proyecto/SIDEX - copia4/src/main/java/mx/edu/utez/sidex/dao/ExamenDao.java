@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 public class ExamenDao {
     private static HikariDataSource dataSource;
@@ -107,7 +109,7 @@ public class ExamenDao {
     }
 
     public boolean crearExamen(Examen examen, List<Pregunta> preguntas) {
-        String examenQuery = "INSERT INTO examenes (titulo, fecha_apertura, fecha_cierre, fecha_hora_apertura, fecha_hora_cierre, descripcion, estado, calificacion, mejor_calificacion, materia, intentos, aprobado_por_docente) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String examenQuery = "INSERT INTO examenes (titulo, fecha_hora_apertura, fecha_hora_cierre, descripcion, estado, calificacion, mejor_calificacion, materia, intentos, aprobado_por_docente) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         String preguntaQuery = "INSERT INTO preguntas (examen_id, texto, opcion1, opcion2, opcion3, opcion4, respuesta_correcta) VALUES (?, ?, ?, ?, ?, ?, ?)";
         Connection con = null;
 
@@ -117,21 +119,20 @@ public class ExamenDao {
 
             try (PreparedStatement psExamen = con.prepareStatement(examenQuery, PreparedStatement.RETURN_GENERATED_KEYS)) {
                 psExamen.setString(1, examen.getTitulo() != null ? examen.getTitulo() : "Examen sin título");
-                psExamen.setDate(2, examen.getFechaApertura() != null ? new java.sql.Date(examen.getFechaApertura().getTime()) : null);
-                psExamen.setDate(3, examen.getFechaCierre() != null ? new java.sql.Date(examen.getFechaCierre().getTime()) : null);
-                psExamen.setTimestamp(4, examen.getFechaHoraApertura() != null ? new java.sql.Timestamp(examen.getFechaHoraApertura().getTime()) : null);
-                psExamen.setTimestamp(5, examen.getFechaHoraCierre() != null ? new java.sql.Timestamp(examen.getFechaHoraCierre().getTime()) : null);
-                psExamen.setString(6, examen.getDescripcion() != null ? examen.getDescripcion() : "");
-                psExamen.setString(7, examen.getEstado() != null ? examen.getEstado() : "Activo");
-                psExamen.setDouble(8, examen.getCalificacion());
-                psExamen.setDouble(9, examen.getMejorCalificacion());
-                psExamen.setString(10, examen.getMateria() != null ? examen.getMateria() : "");
+                psExamen.setTimestamp(2, examen.getFechaHoraApertura());
+                psExamen.setTimestamp(3, examen.getFechaHoraCierre());
+                psExamen.setString(4, examen.getDescripcion() != null ? examen.getDescripcion() : "");
+                psExamen.setString(5, examen.getEstado() != null ? examen.getEstado() : "pendiente");
+                psExamen.setDouble(6, examen.getCalificacion());
+                psExamen.setDouble(7, examen.getMejorCalificacion());
+                psExamen.setString(8, examen.getMateria() != null ? examen.getMateria() : "");
                 if (examen.getIntentos() != null) {
-                    psExamen.setInt(11, examen.getIntentos());
+                    psExamen.setInt(9, examen.getIntentos());
                 } else {
-                    psExamen.setNull(11, java.sql.Types.INTEGER);
+                    psExamen.setNull(9, java.sql.Types.INTEGER);
                 }
-                psExamen.setBoolean(12, examen.isAprobadoPorDocente());
+                psExamen.setBoolean(10, examen.isAprobadoPorDocente());
+
                 psExamen.executeUpdate();
 
                 try (ResultSet rs = psExamen.getGeneratedKeys()) {
@@ -158,7 +159,9 @@ public class ExamenDao {
                 con.commit();
                 return true;
             } catch (SQLException e) {
-                con.rollback();
+                if (con != null) {
+                    con.rollback();
+                }
                 System.err.println("Error al crear el examen: " + e.getMessage());
                 e.printStackTrace();
                 return false;
@@ -178,6 +181,21 @@ public class ExamenDao {
             }
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     // Método para obtener exámenes por clase y estado (pendiente o completado)
@@ -485,7 +503,8 @@ public class ExamenDao {
                             rs.getDouble("mejor_calificacion"),
                             rs.getString("materia"),
                             rs.getObject("intentos", Integer.class),
-                            rs.getBoolean("aprobado_por_docente")
+                            rs.getBoolean("aprobado_por_docente"),
+                            rs.getInt("creador_id") // Agrega creador_id si está en la tabla
                     ));
                 }
             }
@@ -595,7 +614,7 @@ public class ExamenDao {
 
     // Insertar un nuevo examen editado por un docente
     public void insertarExamenEditado(int examenId, String titulo, String descripcion, java.util.Date fechaApertura, java.util.Date fechaCierre, Time horaActivacion, int creadorId) {
-        String sql = "INSERT INTO ExamenesEditadosPorDocentes (examen_id, titulo, descripcion, fecha_apertura, fecha_cierre, hora_activacion, creador_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO ExamenesEditadosPorDocentes (examen_id, titulo, descripcion, hora_activacion, creador_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection con = dataSource.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, examenId);
@@ -921,19 +940,21 @@ public class ExamenDao {
     }
 
 
+
     // Método auxiliar para mapear el resultado de ResultSet a un objeto Examen
+// Método auxiliar para mapear el resultado de ResultSet a un objeto Examen
     private Examen mapExamen(ResultSet rs) throws SQLException {
         return new Examen(
                 rs.getInt("id"),
                 rs.getString("titulo"),
-                rs.getDate("fecha_apertura"),
-                rs.getDate("fecha_cierre"),
-                rs.getTimestamp("fecha_hora_apertura"),
-                rs.getTimestamp("fecha_hora_cierre"),
+                null,  // Si ya no usas fecha_apertura
+                null,  // Si ya no usas fecha_cierre
+                rs.getTimestamp("fecha_hora_apertura"),  // Usar la columna correcta
+                rs.getTimestamp("fecha_hora_cierre"),    // Usar la columna correcta
                 rs.getInt("clase_id"),
                 rs.getString("descripcion"),
-                rs.getString("estado"),
-                rs.getDouble("calificacion"),
+                null, // Si ya no usas estado
+                0.0,  // Si decides omitir calificación, usa un valor por defecto
                 rs.getDouble("mejor_calificacion"),
                 rs.getString("materia"),
                 rs.getObject("intentos", Integer.class),
@@ -941,6 +962,7 @@ public class ExamenDao {
                 rs.getInt("creador_id")
         );
     }
+
 
 
     // Método para filtrar exámenes por materia
@@ -1078,6 +1100,7 @@ public class ExamenDao {
         }
     }
 
+
     public void actualizarExamenEditado(int examenId, String titulo, String descripcion, Timestamp fechaHoraApertura, Timestamp fechaHoraCierre, int claseId, int creadorId) {
         String sql = "UPDATE ExamenesEditadosPorDocentes SET titulo = ?, descripcion = ?, fecha_hora_apertura = ?, fecha_hora_cierre = ?, clase_id = ? WHERE examen_id = ? AND creador_id = ?";
         try (Connection con = dataSource.getConnection();
@@ -1156,6 +1179,93 @@ public class ExamenDao {
         }
 
         return examenesEnCurso;
+    }
+
+    public boolean crearExamenEditadoPorDocente(Examen examen, List<Pregunta> preguntas, int docenteId) {
+        Connection con = null;
+        PreparedStatement psExamen = null;
+        PreparedStatement psPregunta = null;
+
+        String sqlExamen = "INSERT INTO ExamenesEditadosPorDocentes " +
+                "(examen_id, clase_id, titulo, descripcion, fecha_hora_apertura, fecha_hora_cierre, modificador_rol, creador_id, fecha_modificacion) " +
+                "VALUES (?, ?, ?, ?, ?, ?, 'docente', ?, CURRENT_TIMESTAMP)";
+
+        String sqlPregunta = "INSERT INTO PreguntasEditadasPorDocentes " +
+                "(examen_id, texto, opcion1, opcion2, opcion3, opcion4, respuesta_correcta) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        try {
+            con = dataSource.getConnection();
+
+            // Desactivar autocommit para manejar la transacción manualmente
+            con.setAutoCommit(false);
+
+            // Insertar el examen editado
+            psExamen = con.prepareStatement(sqlExamen);
+            psExamen.setInt(1, examen.getId());
+            psExamen.setInt(2, examen.getClaseId());
+            psExamen.setString(3, examen.getTitulo());
+            psExamen.setString(4, examen.getDescripcion());
+            psExamen.setTimestamp(5, (Timestamp) examen.getFechaHoraApertura());
+            psExamen.setTimestamp(6, (Timestamp) examen.getFechaHoraCierre());
+            psExamen.setInt(7, docenteId);
+
+            int examenRowsAffected = psExamen.executeUpdate();
+
+            // Insertar cada pregunta relacionada con el examen editado
+            psPregunta = con.prepareStatement(sqlPregunta);
+            for (Pregunta pregunta : preguntas) {
+                psPregunta.setInt(1, examen.getId());
+                psPregunta.setString(2, pregunta.getTexto());
+                psPregunta.setString(3, pregunta.getOpcion1());
+                psPregunta.setString(4, pregunta.getOpcion2());
+                psPregunta.setString(5, pregunta.getOpcion3());
+                psPregunta.setString(6, pregunta.getOpcion4());
+                psPregunta.setInt(7, pregunta.getRespuestaCorrecta());
+
+                psPregunta.addBatch();  // Añadir a batch para ejecución en lote
+            }
+            int[] preguntaRowsAffected = psPregunta.executeBatch();
+
+            // Confirmar la transacción
+            con.commit();
+
+            // Verificar si se insertaron correctamente el examen y todas las preguntas
+            return examenRowsAffected > 0 && preguntaRowsAffected.length == preguntas.size();
+        } catch (SQLException e) {
+            System.err.println("Error al crear el examen editado por el docente: " + e.getMessage());
+            e.printStackTrace();
+            if (con != null) {
+                try {
+                    con.rollback();  // Revertir la transacción en caso de error
+                } catch (SQLException rollbackEx) {
+                    rollbackEx.printStackTrace();
+                }
+            }
+            return false;
+        } finally {
+            if (psExamen != null) {
+                try {
+                    psExamen.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (psPregunta != null) {
+                try {
+                    psPregunta.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (con != null) {
+                try {
+                    con.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
 }

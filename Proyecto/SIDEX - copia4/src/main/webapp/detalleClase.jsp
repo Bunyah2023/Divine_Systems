@@ -166,7 +166,7 @@
                                 now.after(examen.getFechaHoraApertura()) && now.before(examen.getFechaHoraCierre())) {
                     %>
                     <div class="exam">
-                        <p><%= examen.getTitulo() %> - <%= new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(examen.getFechaApertura()) %></p>
+                        <p><%= examen.getTitulo() %> - <%= examen.getFechaHoraApertura() != null ? new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(examen.getFechaHoraApertura()) : "Fecha no disponible" %></p>
                         <button class="btn btn-primary" onclick="window.location.href='examen.jsp?examenId=<%= examen.getId() %>'">Tomar examen</button>
                     </div>
                     <% } else if (examen.getFechaHoraCierre() != null && now.after(examen.getFechaHoraCierre())) {
@@ -214,7 +214,7 @@
                     <% } else { %>
                     <% for (Examen examen : examenesEnCurso) { %>
                     <div class="exam">
-                        <p><%= examen.getTitulo() %> - <%= new java.text.SimpleDateFormat("dd/MM/yyyy").format(examen.getFechaApertura()) %></p>
+                        <p><%= examen.getTitulo() %> - <%= examen.getFechaHoraApertura() != null ? new java.text.SimpleDateFormat("dd/MM/yyyy").format(examen.getFechaHoraApertura()) : "Fecha no disponible" %></p>
                         <button class="btn btn-primary" onclick="window.location.href='editarExamen.jsp?examenId=<%= examen.getId() %>'">Editar Examen</button>
                     </div>
                     <% } %>
