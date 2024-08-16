@@ -1,0 +1,55 @@
+/* Estilos para la sección de clases */
+.clases-estudiante {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly; /* Asegura que los items están distribuidos uniformemente */
+    padding: 20px 0; /* Espacio vertical para el contenedor */
+}
+
+.curso {
+    flex: 0 0 48%; /* Ajuste para que quepan dos cursos por fila con espacio */
+    background-color: #e7f4fd; /* Color de fondo claro para los cursos */
+    border-radius: 10px;
+    margin: 10px 0; /* Espacio vertical entre cursos */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Sombra suave para dar profundidad */
+    transition: transform 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+}
+
+.curso:hover {
+    transform: translateY(-5px); /* Efecto de hover para levantar el curso */
+}
+
+.curso-header {
+    background-color: #3498db; /* Azul como en la imagen */
+    color: white;
+    padding: 15px 20px; /* Espacio adecuado dentro del encabezado */
+    display: flex;
+    align-items: center;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.curso-icon {
+    width: 40px; /* Ajusta el tamaño del icono */
+    height: 40px;
+    margin-right: 10px; /* Espacio entre el icono y el texto */
+}
+
+.curso-details {
+    padding: 10px 20px; /* Espacio interior para los detalles */
+    background-color: #ffffff; /* Fondo blanco para los detalles */
+    flex-grow: 1; /* Hace que los detalles ocupen el espacio restante */
+}
+
+.curso h3 {
+    font-size: 1.4em; /* Tamaño grande para el título del curso */
+    margin: 0 0 10px 0; /* Espacio debajo del título */
+}
+
+.curso-details p {
+    font-size: 0.9em; /* Tamaño moderado para el texto */
+    margin: 4px 0; /* Espacio entre las líneas */
+    color: #333; /* Color oscuro para texto */
+}

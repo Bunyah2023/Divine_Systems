@@ -1,0 +1,70 @@
+/* Modal Background */
+.modal {
+    display: none; /* Ocultar el modal por defecto */
+    position: fixed; /* Fijo en la pantalla */
+    z-index: 1000; /* Asegúrate de que esté por encima de otros elementos */
+    left: 0;
+    top: 0;
+    width: 100%; /* Ocupa todo el ancho de la pantalla */
+    height: 100%; /* Ocupa toda la altura de la pantalla */
+    overflow: auto; /* Permitir desplazamiento si el contenido es grande */
+    background-color: rgba(0,0,0,0.4); /* Fondo semi-transparente */
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* Centrando el modal en la pantalla */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 50%; /* Cambia el tamaño según lo necesites */
+    max-width: 500px; /* Ancho máximo del modal */
+    border-radius: 8px; /* Bordes redondeados */
+}
+
+/* Close Button */
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+/* Close Button on Hover */
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Modal Buttons */
+.modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px; /* Espacio entre los botones */
+}
+
+.btn-accept,
+.btn-cancel {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-accept {
+    background-color: #4CAF50; /* Verde para aceptar */
+    color: white;
+}
+
+.btn-cancel {
+    background-color: #f44336; /* Rojo para cancelar */
+    color: white;
+}
+
+.btn-accept a,
+.btn-cancel a {
+    color: white;
+    text-decoration: none;
+}

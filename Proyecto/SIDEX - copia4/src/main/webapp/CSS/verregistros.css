@@ -1,0 +1,116 @@
+.titulo {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+/* Estilos para la tabla */
+#registroTabla {
+    margin: auto;
+    width: 80%;
+    border-collapse: collapse;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#registroTabla th,
+#registroTabla td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: center;
+}
+
+#registroTabla th {
+    background-color: #f8f9fa;
+    color: #333;
+    font-weight: bold;
+}
+
+#registroTabla tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+#registroTabla tr:hover {
+    background-color: #ddd;
+}
+
+/* Estilos para los botones */
+button.eliminar,
+button.modificar,
+button.guardar {
+    padding: 8px 16px;
+    margin: 4px;
+    cursor: pointer;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+button.eliminar {
+    background-color: #dc3545;
+}
+
+button.modificar {
+    background-color: #007bff;
+}
+
+button.guardar {
+    background-color: #28a745;
+}
+
+/* Efectos hover para los botones */
+button.eliminar:hover {
+    background-color: #c82333;
+}
+
+button.modificar:hover {
+    background-color: #0056b3;
+}
+
+button.guardar:hover {
+    background-color: #218838;
+}
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #eaf6ff;
+}
+
+header {
+    background-color: #ffffff;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    flex-wrap: wrap; /* Permite que los elementos se envuelvan si no hay espacio suficiente */
+    width: 100%; /* Asegura que el header siempre ocupe el ancho completo de la pantalla */
+}
+
+
+header .logo {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px; /* Espacio inferior para pantallas pequeñas */
+    margin-left: 30px; /* Espacio a la izquierda para evitar que esté demasiado pegado al menú de hamburguesa */
+}
+
+header .logo img {
+    height: auto; /* Altura automática para adaptarse a cambios de ancho */
+    max-height: 60px; /* Altura máxima apropiada para dispositivos móviles y otros */
+    width: auto; /* Ancho automático para mantener la proporción */
+    margin-right: 10px; /* Espacio a la derecha del logo */
+}
+
+header .fotoPerfil img {
+    height: 40px;
+    margin-right: 10px;
+}
+
+header .logo span {
+    font-size: 16px;
+    font-weight: normal;
+    color: #000000;
+}

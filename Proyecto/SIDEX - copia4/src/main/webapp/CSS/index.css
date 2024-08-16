@@ -1,0 +1,452 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #eaf6ff;
+}
+
+header {
+    background-color: #ffffff;
+    color: rgb(0, 0, 0);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    flex-wrap: wrap; /* Permite que los elementos se envuelvan si no hay espacio suficiente */
+    width: 100%; /* Asegura que el header siempre ocupe el ancho completo de la pantalla */
+}
+
+
+header .logo {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px; /* Espacio inferior para pantallas pequeñas */
+    margin-left: 30px; /* Espacio a la izquierda para evitar que esté demasiado pegado al menú de hamburguesa */
+}
+
+header .logo img {
+    height: auto; /* Altura automática para adaptarse a cambios de ancho */
+    max-height: 60px; /* Altura máxima apropiada para dispositivos móviles y otros */
+    width: auto; /* Ancho automático para mantener la proporción */
+    margin-right: 10px; /* Espacio a la derecha del logo */
+}
+
+header .fotoPerfil img {
+    height: 40px;
+    margin-right: 10px;
+}
+
+header .logo span {
+    font-size: 16px;
+    font-weight: normal;
+    color: #000000;
+}
+
+header nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+
+header nav ul li {
+    margin-right: 10px;
+}
+
+header nav ul li a {
+    color: #000000;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+header .right-section {
+    display: flex;
+    align-items: center;
+}
+
+header .right-section .icon {
+    font-size: 24px; /* Aumenta el tamaño para una mejor visibilidad y acceso */
+    margin-right: 20px; /* Aumenta el espacio a la derecha */
+    cursor: pointer;
+}
+
+header .right-section .user-info {
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.hamburger-menu {
+    display: none;
+    flex-direction: column;
+    cursor: pointer;
+    justify-content: center;
+    margin-right: 10px;
+}
+
+.hamburger-menu .bar {
+    width: 25px;
+    height: 4px;
+    background-color: #000000;
+    margin: 4px 0;
+    transition: 0.4s;
+}
+
+.sidebar {
+    height: 100%;
+    width: 80%; /* Ajusta el ancho para dispositivos móviles */
+    position: fixed;
+    top: 0;
+    left: -100%; /* Oculta el sidebar fuera de la vista */
+    background-color: #000000;
+    overflow-x: hidden;
+    transition: transform 0.3s; /* Suaviza la transición */
+    padding-top: 60px;
+    z-index: 100; /* Asegura que esté por encima de otros elementos */
+}
+
+.sidebar.active {
+    transform: translateX(0); /* Muestra el sidebar cuando está activo */
+}
+
+.sidebar ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 20px;
+    color: #818181;
+    display: block;
+    transition: 0.3s;
+}
+
+.sidebar ul li:hover {
+    color: #f1f1f1;
+}
+
+.sidebar ul li a {
+    color: #818181;
+    text-decoration: none;
+    display: block;
+}
+
+.sidebar ul li a:hover {
+    color: #f1f1f1;
+}
+
+@media screen and (max-width: 768px) {
+    header .logo {
+        margin-left: 10px; /* Reduce el margen para pantallas más pequeñas */
+    }
+
+    header .logo img {
+        max-height: 20px; /* Ajusta el tamaño del logo en dispositivos móviles */
+    }
+}
+
+header .right-section .user-info:hover {
+    transform: scale(1.1);
+}
+
+.notifications {
+    padding: 10px;
+    text-align: center; /* Centra el texto para una mejor visualización */
+    background-color: #ffc107a4;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 10px 0;
+}
+
+.notifications .alert {
+    margin-bottom: 10px; /* Añade espacio para evitar que los elementos se peguen */
+    text-align: center;
+}
+
+main {
+    padding: 20px;
+}
+
+.learning h1 {
+    font-size: 25px;
+    margin-bottom: 20px;
+    color: #888;
+    text-align: center;
+}
+
+.cursos {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.curso {
+    background-color: white;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+    margin-bottom: 10px; /* Añadido espacio inferior */
+}
+
+.curso:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.curso-header {
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    color: white;
+    border-radius: 5px 5px 0 0;
+}
+
+.curso.en-progreso .curso-header {
+    background-color: #007bff;
+}
+
+.curso.terminado .curso-header {
+    background-color: #28a745;
+}
+
+.curso.incompleto .curso-header {
+    background-color: #dc3545;
+}
+
+.curso h2 {
+    margin: 10px 0;
+}
+
+.curso-content {
+    display: flex;
+    align-items: center;
+}
+
+.curso-icon img {
+    height: 60px; /* Tamaño reducido para dispositivos móviles */
+    width: 60px;
+    margin-right: 10px;
+}
+
+.curso-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.curso .error {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Estilo para la ventana modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    justify-content: center;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Contenedor de la ventana modal */
+.modal-content {
+    background-color: #fefefe;
+    padding: 20px;
+    border: 1px solid #888;
+    max-width: 90%;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilo para el botón de cancelar */
+#cancel-btn {
+    background-color: #f44336;
+    color: white;
+    padding: 10px 20px;
+    margin-right: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Estilo para el botón de aceptar */
+#accept-btn {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Media query para dispositivos con ancho de pantalla menor a 768px */
+@media screen and (max-width: 768px) {
+    .froid {
+        padding: 10px;
+    }
+
+    .cursos {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .curso {
+        width: 100%;
+        margin-bottom: 20px; /* Espacio adicional inferior para separación */
+    }
+
+    #modal .modal-content {
+        width: 95%;
+        padding: 20px;
+    }
+
+    #modal form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    #modal label {
+        margin-bottom: 2px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    #modal input[type="text"],
+    #modal input[type="date"],
+    #modal textarea,
+    #modal input[type="number"] {
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    #modal .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 10px;
+        width: auto;
+    }
+
+    #modal .btn-success {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    #modal .btn-danger {
+        background-color: #f44336;
+        color: white;
+    }
+
+    #modal .grades {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    #modal .grade {
+        display: flex;
+        flex-direction: column;
+        margin-right: 20px;
+    }
+
+    #modal .grade span {
+        margin-bottom: 5px;
+    }
+
+    #modal .grade input {
+        width: 100%;
+    }
+
+    .cursos {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        padding: 10px;
+    }
+
+    .curso {
+        width: 90%;
+        margin: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease-in-out;
+        background-color: #ffffff;
+        border-radius: 10px;
+    }
+
+    .curso:hover {
+        transform: scale(1.05);
+    }
+
+    .curso-header {
+        color: white;
+        background-color: #3498db;
+        padding: 20px;
+        border-radius: 10px 10px 0 0;
+        position: relative;
+    }
+
+    .curso-icon {
+        position: absolute;
+        top: -30px;
+        left: 20px;
+        background: white;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .curso-details {
+        margin-top: 20px;
+        padding: 10px;
+    }
+
+    .curso-details p {
+        margin: 5px 0;
+        color: #333;
+    }
+
+    a {
+        color: #007bff;
+        text-decoration: none;
+    }
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+    .tus-clases {
+        text-align: center;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+}
+
