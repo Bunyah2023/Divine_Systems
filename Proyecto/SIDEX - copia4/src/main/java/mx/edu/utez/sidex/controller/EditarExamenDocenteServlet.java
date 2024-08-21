@@ -15,70 +15,70 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.Map;
 
-@WebServlet("/crearExamen")
-public class CrearExamenServlet extends HttpServlet {
+@WebServlet("/editarExamenDocente")
+public class EditarExamenDocenteServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        System.out.println("Iniciando proceso de creación de examen...");
+        System.out.println("Iniciando proceso de edición de examen...");
 
         HttpSession session = request.getSession();
         User usuario = (User) session.getAttribute("user");
 
-        if (usuario != null && usuario.getRolId() == 4) { // Verifica que el usuario es coordinador
-            System.out.println("Usuario autenticado como coordinador: " + usuario.getNombres());
+        if (usuario != null && usuario.getRolId() == 2) { // Verifica que el usuario es docente
+            System.out.println("Usuario autenticado como docente: " + usuario.getNombres());
 
             Examen examen;
             try {
                 examen = extraerDatosExamen(request);  // Extrae los datos del examen
             } catch (ServletException e) {
                 session.setAttribute("errorMessage", e.getMessage());
-                response.sendRedirect("crearExamen.jsp");
+                response.sendRedirect("editarExamen.jsp");
                 return;
             }
 
             List<Pregunta> preguntas = recogerPreguntas(request);  // Recoge las preguntas del formulario
 
-            ExamenDao examenDao = new ExamenDao();
-            boolean creado = examenDao.crearExamen(examen, preguntas);  // Crea el examen y asocia las preguntas
+            int claseId = examen.getClaseId(); // Obtén el clase_id desde el examen
+            int creadorId = usuario.getId(); // Obtén el creador_id desde la sesión del usuario
 
-            if (creado) {
-                System.out.println("Examen creado exitosamente: " + examen.getTitulo());
-                session.setAttribute("registerMessage", "Examen creado con éxito.");
+            ExamenDao examenDao = new ExamenDao();
+            boolean actualizado = examenDao.actualizarExamenDocente(examen, preguntas, creadorId, claseId);  // Actualiza el examen y sus preguntas, pasando el creador_id y clase_id
+
+            if (actualizado) {
+                System.out.println("Examen editado exitosamente: " + examen.getTitulo());
+                session.setAttribute("registerMessage", "Examen editado con éxito.");
                 session.setAttribute("messageType", "success");
             } else {
-                System.out.println("Error al crear el examen: " + examen.getTitulo());
-                session.setAttribute("registerMessage", "Error al crear el examen.");
+                System.out.println("Error al editar el examen: " + examen.getTitulo());
+                session.setAttribute("registerMessage", "Error al editar el examen.");
                 session.setAttribute("messageType", "error");
             }
 
-            response.sendRedirect("index-coordinador.jsp");
+            response.sendRedirect("index-docente.jsp");
 
         } else {
-            System.out.println("Acceso denegado: El usuario no es coordinador o no está autenticado.");
-            session.setAttribute("errorMessage", "No tienes permiso para crear exámenes.");
+            System.out.println("Acceso denegado: El usuario no es docente o no está autenticado.");
+            session.setAttribute("errorMessage", "No tienes permiso para editar exámenes.");
             response.sendRedirect("acceso_denegado.jsp");
         }
     }
 
     private Examen extraerDatosExamen(HttpServletRequest request) throws ServletException {
         try {
+            int examenId = Integer.parseInt(request.getParameter("examen_id"));
             String titulo = request.getParameter("titulo");
             String descripcion = request.getParameter("descripcion");
-            String materia = request.getParameter("materia"); // Asegúrate de que este valor no sea nulo o vacío
+            String materia = request.getParameter("materia");
 
-            // Verifica que materia no sea nulo ni vacío
             if (materia == null || materia.trim().isEmpty()) {
                 throw new ServletException("El campo materia no puede estar vacío.");
             }
 
-            // Otros parámetros y procesamiento...
-            String startDateStr = request.getParameter("fechaHoraApertura");
-            String endDateStr = request.getParameter("fechaHoraCierre");
+            String startDateStr = request.getParameter("fechaApertura");
+            String endDateStr = request.getParameter("fechaCierre");
             Timestamp startDate = null;
             Timestamp endDate = null;
 
@@ -114,11 +114,19 @@ public class CrearExamenServlet extends HttpServlet {
                 }
             }
 
-            System.out.println("Datos extraídos del examen: " + titulo + ", Fecha y Hora Apertura: " + startDate + ", Fecha y Hora Cierre: " + endDate + ", Materia: " + materia);
+            // Obtener claseId desde la sesión
+            HttpSession session = request.getSession();
+            Object claseIdObj = session.getAttribute("claseId");
+            if (claseIdObj == null) {
+                throw new ServletException("No se encontró el Clase ID en la sesión.");
+            }
+            int claseId = Integer.parseInt(claseIdObj.toString());
 
-            return new Examen(0, titulo, null, null, startDate, endDate, 0, descripcion, "pendiente", 0.0, 0.0, materia, intentos, false);
+            System.out.println("Datos extraídos del examen: " + titulo + ", Fecha y Hora Apertura: " + startDate + ", Fecha y Hora Cierre: " + endDate + ", Materia: " + materia + ", Clase ID: " + claseId);
+
+            return new Examen(examenId, titulo, null, null, startDate, endDate, claseId, descripcion, "pendiente", 0.0, 0.0, materia, intentos, false);
         } catch (IllegalArgumentException e) {
-            throw new ServletException("Error al parsear las fechas del examen.", e);
+            throw new ServletException("Error al parsear las fechas del examen o el ID del examen.", e);
         }
     }
 
@@ -126,12 +134,13 @@ public class CrearExamenServlet extends HttpServlet {
     private List<Pregunta> recogerPreguntas(HttpServletRequest request) {
         List<Pregunta> preguntas = new ArrayList<>();
 
-        String[] textos = request.getParameterValues("preguntas[][texto]");
-        String[] opcion1s = request.getParameterValues("preguntas[][opcion1]");
-        String[] opcion2s = request.getParameterValues("preguntas[][opcion2]");
-        String[] opcion3s = request.getParameterValues("preguntas[][opcion3]");
-        String[] opcion4s = request.getParameterValues("preguntas[][opcion4]");
-        String[] correctas = request.getParameterValues("preguntas[][correcta]");
+        String[] preguntaIds = request.getParameterValues("preguntaId[]");
+        String[] textos = request.getParameterValues("preguntaTexto[]");
+        String[] opcion1s = request.getParameterValues("opcion1[]");
+        String[] opcion2s = request.getParameterValues("opcion2[]");
+        String[] opcion3s = request.getParameterValues("opcion3[]");
+        String[] opcion4s = request.getParameterValues("opcion4[]");
+        String[] correctas = request.getParameterValues("respuestaCorrecta[]");
 
         if (textos != null && opcion1s != null && opcion2s != null && opcion3s != null && opcion4s != null && correctas != null) {
             for (int i = 0; i < textos.length; i++) {
@@ -159,7 +168,7 @@ public class CrearExamenServlet extends HttpServlet {
 
                     try {
                         int respuestaCorrecta = Integer.parseInt(correctaStr);
-                        Pregunta pregunta = new Pregunta(texto, opcion1, opcion2, opcion3, opcion4, respuestaCorrecta, 0);
+                        Pregunta pregunta = new Pregunta(Integer.parseInt(preguntaIds[i]), texto, opcion1, opcion2, opcion3, opcion4, respuestaCorrecta, 0);
                         preguntas.add(pregunta);
                         System.out.println("Pregunta " + (i + 1) + " añadida exitosamente.");
                     } catch (NumberFormatException e) {
@@ -176,16 +185,5 @@ public class CrearExamenServlet extends HttpServlet {
         System.out.println("Total de preguntas recogidas: " + preguntas.size());
         return preguntas;
     }
-
 }
-
-
-
-
-
-
-
-
-
-
 

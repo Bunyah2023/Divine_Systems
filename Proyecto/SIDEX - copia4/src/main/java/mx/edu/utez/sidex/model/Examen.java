@@ -81,6 +81,37 @@ public class Examen {
     public Examen(int i, String titulo, Timestamp startDate, Timestamp endDate, String descripcion, String pendiente, double v, double v1, String materia, Integer intentos, boolean b) {
     }
 
+    public <T> Examen(int id, String titulo, Timestamp fechaHoraApertura, Timestamp fechaHoraCierre, int claseId, String descripcion, String estado, double calificacion, double mejorCalificacion, String materia, T intentos, boolean aprobadoPorDocente) {
+        this.id = id;
+        this.titulo = titulo;
+        this.fechaHoraApertura = fechaHoraApertura;
+        this.fechaHoraCierre = fechaHoraCierre;
+        this.claseId = claseId;
+        this.descripcion = descripcion;
+        this.estado = estado;
+        this.calificacion = calificacion;
+        this.mejorCalificacion = mejorCalificacion;
+        this.materia = materia;
+        this.aprobadoPorDocente = aprobadoPorDocente;
+
+        // Aquí manejas 'intentos' como genérico
+        if (intentos instanceof Integer) {
+            this.intentos = (Integer) intentos;
+        } else if (intentos instanceof String) {
+            try {
+                this.intentos = Integer.parseInt((String) intentos);
+            } catch (NumberFormatException e) {
+                this.intentos = null;  // Manejo de error si no se puede convertir
+            }
+        } else {
+            this.intentos = null; // Si no es un tipo compatible, lo dejamos como null
+        }
+    }
+
+    public Examen() {
+
+    }
+
 
     // Getters and Setters
     public int getId() {

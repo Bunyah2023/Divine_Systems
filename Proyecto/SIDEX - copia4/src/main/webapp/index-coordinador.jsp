@@ -62,6 +62,7 @@
     </div>
     <br>
 
+    <!-- Parte del código que corresponde al modal para crear el examen -->
     <div id="modal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -101,6 +102,7 @@
             </form>
         </div>
     </div>
+
 
     <!-- Almacén de Exámenes -->
     <section id="almacen-examenes">
@@ -216,6 +218,10 @@
         const btnOpenModal = document.getElementById('create-exam-btn');
         const btnCloseModal = document.getElementsByClassName('close')[0];
         const btnCancel = document.getElementById('cancel-btn');
+        const createExamForm = document.getElementById('create-exam-form');
+
+        let questionCount = 0;
+        const maxQuestions = 30;
 
         function toggleModal(display) {
             modal.style.display = display;
@@ -241,32 +247,41 @@
 
         const addQuestionBtn = document.getElementById('add-question-btn');
         const questionsContainer = document.getElementById('questions-container');
-        let questionCount = 0;
-        const maxQuestions = 30;
 
         addQuestionBtn.addEventListener('click', function() {
             if (questionCount < maxQuestions) {
-                questionCount++;
+                const questionIndex = questionCount;
                 const newQuestionHTML = `
-                <div class="question">
-                    <label for="pregunta${questionCount}">Pregunta ${questionCount}:</label>
-                    <textarea id="pregunta${questionCount}" name="pregunta${questionCount}" placeholder="Escribe la pregunta aquí" required></textarea>
-                    <label>Opciones:</label>
-                    <input type="text" id="opcion${questionCount}1" name="opcion${questionCount}1" placeholder="Opción 1" required>
-                    <input type="text" id="opcion${questionCount}2" name="opcion${questionCount}2" placeholder="Opción 2" required>
-                    <input type="text" id="opcion${questionCount}3" name="opcion${questionCount}3" placeholder="Opción 3" required>
-                    <input type="text" id="opcion${questionCount}4" name="opcion${questionCount}4" placeholder="Opción 4" required>
-                    <label for="correcta${questionCount}">Respuesta Correcta:</label>
-                    <select id="correcta${questionCount}" name="correcta${questionCount}" required>
-                        <option value="1">Opción 1</option>
-                        <option value="2">Opción 2</option>
-                        <option value="3">Opción 3</option>
-                        <option value="4">Opción 4</option>
-                    </select>
-                </div>`;
+        <div class="question">
+            <label for="pregunta${questionIndex}">Pregunta ${questionCount + 1}:</label>
+            <textarea id="pregunta${questionIndex}" name="preguntas[${questionIndex}][texto]" placeholder="Escribe la pregunta aquí" required></textarea>
+            <label>Opciones:</label>
+            <input type="text" id="opcion${questionIndex}_1" name="preguntas[${questionIndex}][opcion1]" placeholder="Opción 1" required>
+            <input type="text" id="opcion${questionIndex}_2" name="preguntas[${questionIndex}][opcion2]" placeholder="Opción 2" required>
+            <input type="text" id="opcion${questionIndex}_3" name="preguntas[${questionIndex}][opcion3]" placeholder="Opción 3" required>
+            <input type="text" id="opcion${questionIndex}_4" name="preguntas[${questionIndex}][opcion4]" placeholder="Opción 4" required>
+            <label for="correcta${questionIndex}">Respuesta Correcta:</label>
+            <select id="correcta${questionIndex}" name="preguntas[${questionIndex}][correcta]" required>
+                <option value="1">Opción 1</option>
+                <option value="2">Opción 2</option>
+                <option value="3">Opción 3</option>
+                <option value="4">Opción 4</option>
+            </select>
+        </div>`;
                 questionsContainer.insertAdjacentHTML('beforeend', newQuestionHTML);
-            } else {
-                console.log("Se ha alcanzado el número máximo de preguntas.");
+                questionCount++;
+
+                if (questionCount >= maxQuestions) {
+                    addQuestionBtn.disabled = true;
+                    alert("Se ha alcanzado el número máximo de preguntas.");
+                }
+            }
+        });
+
+        createExamForm.addEventListener('submit', function(event) {
+            if (questionCount === 0) {
+                event.preventDefault();
+                alert("Debes agregar al menos una pregunta antes de enviar el formulario.");
             }
         });
     });
@@ -274,10 +289,5 @@
 
 </body>
 </html>
-
-
-
-
-
 
 

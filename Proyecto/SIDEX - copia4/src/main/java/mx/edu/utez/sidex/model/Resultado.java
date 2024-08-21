@@ -3,6 +3,7 @@ package mx.edu.utez.sidex.model;
 import java.util.Map;
 
 public class Resultado {
+    private int id;  // Agregamos el campo id
     private int estudianteId;
     private String estudianteNombre;
     private double calificacion;
@@ -21,6 +22,10 @@ public class Resultado {
         this.respuestasIncorrectas = respuestasIncorrectas;
         this.examenId = examenId;
         this.aprobado = aprobado;
+    }
+
+    public Resultado() {
+
     }
 
     public int getEstudianteId() {
@@ -136,4 +141,13 @@ public class Resultado {
         return aprobado;
     }
 
+    // Método para obtener el ID del resultado
+    public int getId() {
+        return id;
+    }
+
+    // Método para establecer el ID del resultado
+    public void setId(int id) {
+        this.id = id;
+    }
 }

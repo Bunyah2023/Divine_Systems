@@ -43,14 +43,14 @@ public class UserDao {
 
     // Método para obtener un usuario por correo y contraseña
     public User getOne(String correo, String contra) {
-        String sql = "SELECT * FROM users WHERE correo = ? AND contra = ?";
+        String sql = "SELECT * FROM users WHERE correo = ? AND AES_DECRYPT(contra, 'hola') = ?";
         User user = null;
 
         try (Connection connection = DatabaseConnectionManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setString(1, correo);
-            statement.setString(2, contra); // Considera usar hashing y salting para la contraseña
+            statement.setString(2, contra); // La contraseña proporcionada por el usuario
             ResultSet resultSet = statement.executeQuery();
 
             if (resultSet.next()) {
@@ -74,7 +74,7 @@ public class UserDao {
 
     // Método para crear un nuevo usuario
     public boolean create(User user) {
-        String sql = "INSERT INTO users (nombres, apellido, apellidoMaterno, correo, contra, rol_id, estado) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO users (nombres, apellido, apellidoMaterno, correo, contra, rol_id, estado) VALUES (?, ?, ?, ?, aes_encrypt(?,'hola'), ?, ?)";
         try (Connection connection = DatabaseConnectionManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
@@ -95,42 +95,47 @@ public class UserDao {
         }
     }
 
-    // Método para actualizar un usuario
     public User getOne1(int id) {
-        User u = new User();
-        String query = "select * from users where id = ?";
-        try {
-            Connection con = DatabaseConnectionManager.getConnection();
-            PreparedStatement ps = con.prepareStatement(query);
+        User u = null;
+        String query = "SELECT * FROM users WHERE id = ?";
+        try (Connection con = DatabaseConnectionManager.getConnection();
+             PreparedStatement ps = con.prepareStatement(query)) {
             ps.setInt(1, id);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                u.setNombres(rs.getString("nombres"));
-                u.setApellido(rs.getString("apellido"));
-                u.setApellidoMaterno(rs.getString("apellidoMaterno"));
-                u.setContra(rs.getString("contra"));
-                u.setCorreo(rs.getString("correo"));
-                u.setId(rs.getInt("id"));
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    u = new User();
+                    u.setNombres(rs.getString("nombres"));
+                    u.setApellido(rs.getString("apellido"));
+                    u.setApellidoMaterno(rs.getString("apellidoMaterno"));
+                    u.setContra(rs.getString("contra"));
+                    u.setCorreo(rs.getString("correo"));
+                    u.setId(rs.getInt("id"));
+                }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            e.printStackTrace(); // Considera utilizar un logger
         }
         return u;
     }
 
-    // Método para actualizar un usuario
-    public boolean update(User user) {
-        String sql = "UPDATE users SET nombres = ?, apellido = ?, apellidoMaterno = ?, correo = ?, contra = ? WHERE id = ?";
-        try (Connection connection = DatabaseConnectionManager.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
 
-            statement.setString(1, user.getNombres());
-            statement.setString(2, user.getApellido());
-            statement.setString(3, user.getApellidoMaterno());
-            statement.setString(4, user.getCorreo());
-            statement.setString(5, user.getContra()); // Asegúrate de encriptar la contraseña si fue actualizada
-            statement.setInt(6, user.getId());
-            int rowsUpdated = statement.executeUpdate();
+    public boolean update(User user) {
+        // Consulta para actualizar el usuario con la opción de encriptar la contraseña
+        String updateSql = "UPDATE users SET nombres = ?, apellido = ?, apellidoMaterno = ?, correo = ?, " +
+                "contra = aes_encrypt(?, 'hola') WHERE id = ?";
+
+        try (Connection connection = DatabaseConnectionManager.getConnection();
+             PreparedStatement updateStmt = connection.prepareStatement(updateSql)) {
+
+            // Asignar los parámetros al PreparedStatement
+            updateStmt.setString(1, user.getNombres());
+            updateStmt.setString(2, user.getApellido());
+            updateStmt.setString(3, user.getApellidoMaterno());
+            updateStmt.setString(4, user.getCorreo());
+            updateStmt.setString(5, user.getContra()); // Aquí pasas la contraseña directamente
+            updateStmt.setInt(6, user.getId());
+
+            int rowsUpdated = updateStmt.executeUpdate();
             return rowsUpdated > 0;
 
         } catch (SQLException ex) {
@@ -138,6 +143,8 @@ public class UserDao {
             return false;
         }
     }
+
+
     // Método para eliminar un usuario
     public boolean delete(int userId) {
         String sql = "DELETE FROM users WHERE id = ?";

@@ -5,15 +5,16 @@ import com.zaxxer.hikari.HikariDataSource;
 import mx.edu.utez.sidex.model.Examen;
 import mx.edu.utez.sidex.model.Pregunta;
 import mx.edu.utez.sidex.model.Resultado;
-import mx.edu.utez.sidex.utils.DatabaseConnectionManager;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.sql.Connection;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
+
+import static mx.edu.utez.sidex.utils.DatabaseConnectionManager.getConnection;
 
 public class ExamenDao {
     private static HikariDataSource dataSource;
@@ -112,6 +113,7 @@ public class ExamenDao {
         String examenQuery = "INSERT INTO examenes (titulo, fecha_hora_apertura, fecha_hora_cierre, descripcion, estado, calificacion, mejor_calificacion, materia, intentos, aprobado_por_docente) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         String preguntaQuery = "INSERT INTO preguntas (examen_id, texto, opcion1, opcion2, opcion3, opcion4, respuesta_correcta) VALUES (?, ?, ?, ?, ?, ?, ?)";
         Connection con = null;
+        int numPreguntasInsertadas = 0;
 
         try {
             con = dataSource.getConnection();
@@ -138,6 +140,7 @@ public class ExamenDao {
                 try (ResultSet rs = psExamen.getGeneratedKeys()) {
                     if (rs.next()) {
                         int examenId = rs.getInt(1);
+                        System.out.println("Examen ID generado: " + examenId);
 
                         // Insertar las preguntas asociadas
                         try (PreparedStatement psPregunta = con.prepareStatement(preguntaQuery)) {
@@ -151,13 +154,15 @@ public class ExamenDao {
                                 psPregunta.setInt(7, pregunta.getRespuestaCorrecta());
                                 psPregunta.addBatch();
                             }
-                            psPregunta.executeBatch();
+                            int[] results = psPregunta.executeBatch();
+                            numPreguntasInsertadas = results.length;
+                            System.out.println("Número de preguntas insertadas: " + numPreguntasInsertadas);
                         }
                     }
                 }
 
                 con.commit();
-                return true;
+                return numPreguntasInsertadas == preguntas.size();
             } catch (SQLException e) {
                 if (con != null) {
                     con.rollback();
@@ -183,37 +188,19 @@ public class ExamenDao {
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // Método para obtener exámenes por clase y estado (pendiente o completado)
-    public List<Examen> obtenerExamenesPorClaseYEstado(int claseId, boolean completado) {
+    // Método para obtener exámenes editados por docentes por clase y dentro del rango de fechas de apertura y cierre
+    public List<Examen> obtenerExamenesPorClaseYFechas(int claseId) {
         List<Examen> examenes = new ArrayList<>();
-        String estado = completado ? "completado" : "pendiente";
-        String sql = "SELECT * FROM examenes WHERE clase_id = ? AND estado = ?";
+        String sql = "SELECT * FROM ExamenesEditadosPorDocentes WHERE clase_id = ? AND fecha_hora_apertura <= NOW() AND fecha_hora_cierre >= NOW()";
         try (Connection con = dataSource.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, claseId);
-            ps.setString(2, estado);
+            System.out.println("Clase ID: " + claseId); // Debugging line
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     examenes.add(new Examen(
                             rs.getInt("id"),
                             rs.getString("titulo"),
-                            rs.getDate("fecha_apertura"),
-                            rs.getDate("fecha_cierre"),
                             rs.getTimestamp("fecha_hora_apertura"),
                             rs.getTimestamp("fecha_hora_cierre"),
                             rs.getInt("clase_id"),
@@ -228,11 +215,15 @@ public class ExamenDao {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error al obtener exámenes por clase y estado: " + e.getMessage());
+            System.err.println("Error al obtener exámenes por clase y fechas: " + e.getMessage());
             e.printStackTrace();
         }
         return examenes;
     }
+
+
+
+
 
 
     // Método para eliminar un examen
@@ -594,60 +585,84 @@ public class ExamenDao {
 
 
     // Actualizar un examen editado por un docente
-    public void actualizarExamenEditado(int examenId, String titulo, String descripcion, java.util.Date fechaApertura, java.util.Date fechaCierre, Time horaActivacion, int creadorId) {
-        String sql = "UPDATE ExamenesEditadosPorDocentes SET titulo = ?, descripcion = ?, fecha_apertura = ?, fecha_cierre = ?, hora_activacion = ?, creador_id = ? WHERE examen_id = ?";
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setString(1, titulo);
-            ps.setString(2, descripcion);
-            ps.setDate(3, new java.sql.Date(fechaApertura.getTime()));
-            ps.setDate(4, new java.sql.Date(fechaCierre.getTime()));
-            ps.setTime(5, horaActivacion);
-            ps.setInt(6, creadorId);
-            ps.setInt(7, examenId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            System.err.println("Error al actualizar el examen editado: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
+    public boolean actualizarExamenEditado(Examen examen, List<Pregunta> preguntas) {
+        String examenQuery = "INSERT INTO ExamenesEditadosPorDocentes (examen_id, titulo, fecha_hora_apertura, fecha_hora_cierre, descripcion, intentos, materia, clase_id, fecha_modificacion, creador_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?) " +
+                "ON DUPLICATE KEY UPDATE titulo = VALUES(titulo), fecha_hora_apertura = VALUES(fecha_hora_apertura), fecha_hora_cierre = VALUES(fecha_hora_cierre), descripcion = VALUES(descripcion), " +
+                "intentos = VALUES(intentos), materia = VALUES(materia), clase_id = VALUES(clase_id), fecha_modificacion = CURRENT_TIMESTAMP";
 
-    // Insertar un nuevo examen editado por un docente
-    public void insertarExamenEditado(int examenId, String titulo, String descripcion, java.util.Date fechaApertura, java.util.Date fechaCierre, Time horaActivacion, int creadorId) {
-        String sql = "INSERT INTO ExamenesEditadosPorDocentes (examen_id, titulo, descripcion, hora_activacion, creador_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, examenId);
-            ps.setString(2, titulo);
-            ps.setString(3, descripcion);
-            ps.setDate(4, new java.sql.Date(fechaApertura.getTime()));
-            ps.setDate(5, new java.sql.Date(fechaCierre.getTime()));
-            ps.setTime(6, horaActivacion);
-            ps.setInt(7, creadorId);
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            System.err.println("Error al insertar el examen editado: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
+        String preguntaQuery = "INSERT INTO PreguntasEditadasPorDocentes (examen_id, texto, opcion1, opcion2, opcion3, opcion4, respuesta_correcta, pregunta_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE texto = VALUES(texto), opcion1 = VALUES(opcion1), opcion2 = VALUES(opcion2), opcion3 = VALUES(opcion3), opcion4 = VALUES(opcion4), respuesta_correcta = VALUES(respuesta_correcta)";
 
-    // Verificar si el examen ya ha sido editado por un docente
-    public boolean examenEditadoExiste(int examenId) {
-        String sql = "SELECT COUNT(*) FROM ExamenesEditadosPorDocentes WHERE examen_id = ?";
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, examenId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1) > 0;
+        Connection con = null;
+        int numPreguntasInsertadas = 0;
+
+        try {
+            con = dataSource.getConnection();
+            con.setAutoCommit(false);
+
+            // Insertar o actualizar el examen
+            try (PreparedStatement psExamen = con.prepareStatement(examenQuery)) {
+                psExamen.setInt(1, examen.getId());
+                psExamen.setString(2, examen.getTitulo() != null ? examen.getTitulo() : "Examen sin título");
+                psExamen.setTimestamp(3, examen.getFechaHoraApertura());
+                psExamen.setTimestamp(4, examen.getFechaHoraCierre());
+                psExamen.setString(5, examen.getDescripcion() != null ? examen.getDescripcion() : "");
+                psExamen.setInt(6, examen.getIntentos() != null ? examen.getIntentos() : java.sql.Types.INTEGER);
+                psExamen.setString(7, examen.getMateria() != null ? examen.getMateria() : "");
+                psExamen.setInt(8, examen.getClaseId());
+                psExamen.setInt(9, examen.getCreadorId());
+
+                psExamen.executeUpdate();
+            }
+
+            // Insertar o actualizar las preguntas asociadas
+            try (PreparedStatement psPregunta = con.prepareStatement(preguntaQuery)) {
+                for (Pregunta pregunta : preguntas) {
+                    psPregunta.setInt(1, examen.getId());
+                    psPregunta.setString(2, pregunta.getTexto() != null ? pregunta.getTexto() : "");
+                    psPregunta.setString(3, pregunta.getOpcion1() != null ? pregunta.getOpcion1() : "");
+                    psPregunta.setString(4, pregunta.getOpcion2() != null ? pregunta.getOpcion2() : "");
+                    psPregunta.setString(5, pregunta.getOpcion3() != null ? pregunta.getOpcion3() : "");
+                    psPregunta.setString(6, pregunta.getOpcion4() != null ? pregunta.getOpcion4() : "");
+                    psPregunta.setInt(7, pregunta.getRespuestaCorrecta());
+                    psPregunta.setInt(8, pregunta.getId());
+
+                    psPregunta.addBatch();
+                }
+
+                int[] results = psPregunta.executeBatch();
+                numPreguntasInsertadas = results.length;
+                System.out.println("Número de preguntas insertadas o actualizadas: " + numPreguntasInsertadas);
+            }
+
+            // Confirmar la transacción
+            con.commit();
+            return numPreguntasInsertadas == preguntas.size();
+        } catch (SQLException e) {
+            if (con != null) {
+                try {
+                    con.rollback();
+                } catch (SQLException rollbackEx) {
+                    rollbackEx.printStackTrace();
                 }
             }
-        } catch (SQLException e) {
-            System.err.println("Error al verificar si el examen editado existe: " + e.getMessage());
+            System.err.println("Error al actualizar el examen editado o las preguntas: " + e.getMessage());
             e.printStackTrace();
+            return false;
+        } finally {
+            if (con != null) {
+                try {
+                    con.setAutoCommit(true);
+                    con.close();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
         }
-        return false;
     }
+
 
     public void guardarExamenEditadoPorDocente(int examenId, String titulo, String descripcion, Date fechaApertura, Date fechaCierre) {
         String sql = "INSERT INTO ExamenesEditadosPorDocentes (examen_id, titulo, descripcion, fecha_apertura, fecha_cierre) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE titulo = ?, descripcion = ?, fecha_apertura = ?, fecha_cierre = ?";
@@ -970,7 +985,7 @@ public class ExamenDao {
         List<Examen> examenes = new ArrayList<>();
         String sql = "SELECT * FROM examenes WHERE materia = ?";
 
-        try (Connection con = DatabaseConnectionManager.getConnection();
+        try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, materia);
             try (ResultSet rs = ps.executeQuery()) {
@@ -990,7 +1005,7 @@ public class ExamenDao {
         List<Examen> examenes = new ArrayList<>();
         String sql = "SELECT * FROM examenes WHERE fecha_hora_apertura >= ?";
 
-        try (Connection con = DatabaseConnectionManager.getConnection();
+        try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, fechaDesde);
             try (ResultSet rs = ps.executeQuery()) {
@@ -1010,7 +1025,7 @@ public class ExamenDao {
         List<Examen> examenes = new ArrayList<>();
         String sql = "SELECT * FROM examenes WHERE fecha_hora_cierre <= ?";
 
-        try (Connection con = DatabaseConnectionManager.getConnection();
+        try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, fechaHasta);
             try (ResultSet rs = ps.executeQuery()) {
@@ -1030,7 +1045,7 @@ public class ExamenDao {
         List<Examen> examenes = new ArrayList<>();
         String sql = "SELECT * FROM examenes WHERE estado = ?";
 
-        try (Connection con = DatabaseConnectionManager.getConnection();
+        try (Connection con = getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, estado);
             try (ResultSet rs = ps.executeQuery()) {
@@ -1101,7 +1116,7 @@ public class ExamenDao {
     }
 
 
-    public void actualizarExamenEditado(int examenId, String titulo, String descripcion, Timestamp fechaHoraApertura, Timestamp fechaHoraCierre, int claseId, int creadorId) {
+    public void actualizarExamenEditado(int examenId, String titulo, String descripcion, Timestamp fechaHoraApertura, Timestamp fechaHoraCierre, int claseId, int creadorId, int id, List<Pregunta> preguntas) {
         String sql = "UPDATE ExamenesEditadosPorDocentes SET titulo = ?, descripcion = ?, fecha_hora_apertura = ?, fecha_hora_cierre = ?, clase_id = ? WHERE examen_id = ? AND creador_id = ?";
         try (Connection con = dataSource.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -1182,93 +1197,489 @@ public class ExamenDao {
     }
 
     public boolean crearExamenEditadoPorDocente(Examen examen, List<Pregunta> preguntas, int docenteId) {
+        String examenQuery = "INSERT INTO ExamenesEditadosPorDocentes (examen_id, clase_id, titulo, descripcion, fecha_hora_apertura, fecha_hora_cierre, intentos, materia, estado, calificacion, mejor_calificacion, aprobado_por_docente, creador_id, fecha_modificacion) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
+
+        String preguntaQuery = "INSERT INTO PreguntasEditadasPorDocentes (examen_id, clase_id, texto, opcion1, opcion2, opcion3, opcion4, respuesta_correcta, creador_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
         Connection con = null;
-        PreparedStatement psExamen = null;
-        PreparedStatement psPregunta = null;
-
-        String sqlExamen = "INSERT INTO ExamenesEditadosPorDocentes " +
-                "(examen_id, clase_id, titulo, descripcion, fecha_hora_apertura, fecha_hora_cierre, modificador_rol, creador_id, fecha_modificacion) " +
-                "VALUES (?, ?, ?, ?, ?, ?, 'docente', ?, CURRENT_TIMESTAMP)";
-
-        String sqlPregunta = "INSERT INTO PreguntasEditadasPorDocentes " +
-                "(examen_id, texto, opcion1, opcion2, opcion3, opcion4, respuesta_correcta) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        int numPreguntasInsertadas = 0;
 
         try {
             con = dataSource.getConnection();
-
-            // Desactivar autocommit para manejar la transacción manualmente
             con.setAutoCommit(false);
 
-            // Insertar el examen editado
-            psExamen = con.prepareStatement(sqlExamen);
-            psExamen.setInt(1, examen.getId());
-            psExamen.setInt(2, examen.getClaseId());
-            psExamen.setString(3, examen.getTitulo());
-            psExamen.setString(4, examen.getDescripcion());
-            psExamen.setTimestamp(5, (Timestamp) examen.getFechaHoraApertura());
-            psExamen.setTimestamp(6, (Timestamp) examen.getFechaHoraCierre());
-            psExamen.setInt(7, docenteId);
-
-            int examenRowsAffected = psExamen.executeUpdate();
-
-            // Insertar cada pregunta relacionada con el examen editado
-            psPregunta = con.prepareStatement(sqlPregunta);
-            for (Pregunta pregunta : preguntas) {
-                psPregunta.setInt(1, examen.getId());
-                psPregunta.setString(2, pregunta.getTexto());
-                psPregunta.setString(3, pregunta.getOpcion1());
-                psPregunta.setString(4, pregunta.getOpcion2());
-                psPregunta.setString(5, pregunta.getOpcion3());
-                psPregunta.setString(6, pregunta.getOpcion4());
-                psPregunta.setInt(7, pregunta.getRespuestaCorrecta());
-
-                psPregunta.addBatch();  // Añadir a batch para ejecución en lote
-            }
-            int[] preguntaRowsAffected = psPregunta.executeBatch();
-
-            // Confirmar la transacción
-            con.commit();
-
-            // Verificar si se insertaron correctamente el examen y todas las preguntas
-            return examenRowsAffected > 0 && preguntaRowsAffected.length == preguntas.size();
-        } catch (SQLException e) {
-            System.err.println("Error al crear el examen editado por el docente: " + e.getMessage());
-            e.printStackTrace();
-            if (con != null) {
-                try {
-                    con.rollback();  // Revertir la transacción en caso de error
-                } catch (SQLException rollbackEx) {
-                    rollbackEx.printStackTrace();
+            try (PreparedStatement psExamen = con.prepareStatement(examenQuery, PreparedStatement.RETURN_GENERATED_KEYS)) {
+                psExamen.setInt(1, examen.getId());
+                psExamen.setInt(2, examen.getClaseId());
+                psExamen.setString(3, examen.getTitulo() != null ? examen.getTitulo() : "Examen sin título");
+                psExamen.setString(4, examen.getDescripcion() != null ? examen.getDescripcion() : "");
+                psExamen.setTimestamp(5, examen.getFechaHoraApertura());
+                psExamen.setTimestamp(6, examen.getFechaHoraCierre());
+                if (examen.getIntentos() != null) {
+                    psExamen.setInt(7, examen.getIntentos());
+                } else {
+                    psExamen.setNull(7, java.sql.Types.INTEGER);
                 }
+                psExamen.setString(8, examen.getMateria() != null ? examen.getMateria() : "");
+                psExamen.setString(9, examen.getEstado() != null ? examen.getEstado() : "pendiente");
+                psExamen.setDouble(10, examen.getCalificacion());
+                psExamen.setDouble(11, examen.getMejorCalificacion());
+                psExamen.setBoolean(12, examen.isAprobadoPorDocente());
+                psExamen.setInt(13, docenteId);
+
+                psExamen.executeUpdate();
+
+                try (ResultSet rs = psExamen.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        int examenId = rs.getInt(1);
+                        System.out.println("Examen Editado ID generado: " + examenId);
+
+                        // Insertar las preguntas asociadas
+                        try (PreparedStatement psPregunta = con.prepareStatement(preguntaQuery)) {
+                            for (Pregunta pregunta : preguntas) {
+                                psPregunta.setInt(1, examenId);
+                                psPregunta.setInt(2, examen.getClaseId());
+                                psPregunta.setString(3, pregunta.getTexto() != null ? pregunta.getTexto() : "");
+                                psPregunta.setString(4, pregunta.getOpcion1() != null ? pregunta.getOpcion1() : "");
+                                psPregunta.setString(5, pregunta.getOpcion2() != null ? pregunta.getOpcion2() : "");
+                                psPregunta.setString(6, pregunta.getOpcion3() != null ? pregunta.getOpcion3() : "");
+                                psPregunta.setString(7, pregunta.getOpcion4() != null ? pregunta.getOpcion4() : "");
+                                psPregunta.setInt(8, pregunta.getRespuestaCorrecta());
+                                psPregunta.setInt(9, docenteId);
+                                psPregunta.addBatch();
+                            }
+                            int[] results = psPregunta.executeBatch();
+                            numPreguntasInsertadas = results.length;
+                            System.out.println("Número de preguntas insertadas: " + numPreguntasInsertadas);
+                        }
+                    }
+                }
+
+                con.commit();
+                return numPreguntasInsertadas == preguntas.size();
+            } catch (SQLException e) {
+                if (con != null) {
+                    con.rollback();
+                }
+                System.err.println("Error al crear el examen editado por el docente: " + e.getMessage());
+                e.printStackTrace();
+                return false;
             }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener la conexión: " + e.getMessage());
+            e.printStackTrace();
             return false;
         } finally {
-            if (psExamen != null) {
-                try {
-                    psExamen.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (psPregunta != null) {
-                try {
-                    psPregunta.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
             if (con != null) {
                 try {
+                    con.setAutoCommit(true);
                     con.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
                 }
             }
         }
     }
 
+
+
+
+
+    public List<Examen> mostrarExamenesEnCurso(int usuarioId, int rolId) {
+        List<Examen> examenesEnCurso = new ArrayList<>();
+        String sql;
+
+        if (rolId == 2) { // Docente
+            sql = "SELECT * FROM ExamenesEditadosPorDocentes WHERE creador_id = ? AND fecha_hora_apertura <= NOW() AND fecha_hora_cierre >= NOW()";
+        } else if (rolId == 1) { // Estudiante
+            sql = "SELECT * FROM ExamenesEditadosPorDocentes ed JOIN Inscripciones i ON ed.clase_id = i.clase_id " +
+                    "WHERE i.user_id = ? AND fecha_hora_apertura <= NOW() AND fecha_hora_cierre >= NOW()";
+        } else {
+            // Manejar otros roles o lanzar una excepción
+            return examenesEnCurso;
+        }
+
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, usuarioId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Examen examen = mapExamen(rs); // Asumiendo que tienes un método mapExamen que convierte un ResultSet en un objeto Examen
+                    examenesEnCurso.add(examen);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener los exámenes en curso para el usuario: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return examenesEnCurso;
+    }
+
+
+
+
+    public void activarExamenParaDocente(int examenId, int creadorId) {
+        String query = "UPDATE ExamenesEditadosPorDocentes SET estado = 'activo' WHERE examen_id = ? AND creador_id = ?";
+
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement ps = con.prepareStatement(query)) {
+
+            ps.setInt(1, examenId);
+            ps.setInt(2, creadorId);
+
+            int rowsUpdated = ps.executeUpdate();
+
+            if (rowsUpdated > 0) {
+                System.out.println("Examen activado correctamente para el docente con ID: " + creadorId);
+            } else {
+                System.out.println("No se encontró un examen editado por el docente con ID: " + creadorId + " para activar.");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al activar el examen: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public boolean actualizarExamenEditado(int examenId, Examen examen, List<Pregunta> preguntas, int creadorId) {
+        String examenQuery = "INSERT INTO ExamenesEditadosPorDocentes (examen_id, titulo, fecha_hora_apertura, fecha_hora_cierre, descripcion, intentos, materia, clase_id, fecha_modificacion, creador_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?) " +
+                "ON DUPLICATE KEY UPDATE titulo = VALUES(titulo), fecha_hora_apertura = VALUES(fecha_hora_apertura), fecha_hora_cierre = VALUES(fecha_hora_cierre), descripcion = VALUES(descripcion), " +
+                "intentos = VALUES(intentos), materia = VALUES(materia), clase_id = VALUES(clase_id), fecha_modificacion = CURRENT_TIMESTAMP";
+
+        String preguntaQuery = "INSERT INTO PreguntasEditadasPorDocentes (examen_id, texto, opcion1, opcion2, opcion3, opcion4, respuesta_correcta, pregunta_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE texto = VALUES(texto), opcion1 = VALUES(opcion1), opcion2 = VALUES(opcion2), opcion3 = VALUES(opcion3), opcion4 = VALUES(opcion4), respuesta_correcta = VALUES(respuesta_correcta)";
+
+        Connection con = null;
+        int numPreguntasInsertadas = 0;
+
+        try {
+            con = dataSource.getConnection();
+            con.setAutoCommit(false);
+
+            // Insertar o actualizar el examen
+            try (PreparedStatement psExamen = con.prepareStatement(examenQuery)) {
+                psExamen.setInt(1, examenId);
+                psExamen.setString(2, examen.getTitulo() != null ? examen.getTitulo() : "Examen sin título");
+                psExamen.setTimestamp(3, examen.getFechaHoraApertura());
+                psExamen.setTimestamp(4, examen.getFechaHoraCierre());
+                psExamen.setString(5, examen.getDescripcion() != null ? examen.getDescripcion() : "");
+                psExamen.setInt(6, examen.getIntentos() != null ? examen.getIntentos() : java.sql.Types.INTEGER);
+                psExamen.setString(7, examen.getMateria() != null ? examen.getMateria() : "");
+                psExamen.setInt(8, examen.getClaseId());
+                psExamen.setInt(9, creadorId);
+
+                psExamen.executeUpdate();
+            }
+
+            // Insertar o actualizar las preguntas asociadas
+            try (PreparedStatement psPregunta = con.prepareStatement(preguntaQuery)) {
+                for (Pregunta pregunta : preguntas) {
+                    psPregunta.setInt(1, examenId);
+                    psPregunta.setString(2, pregunta.getTexto() != null ? pregunta.getTexto() : "");
+                    psPregunta.setString(3, pregunta.getOpcion1() != null ? pregunta.getOpcion1() : "");
+                    psPregunta.setString(4, pregunta.getOpcion2() != null ? pregunta.getOpcion2() : "");
+                    psPregunta.setString(5, pregunta.getOpcion3() != null ? pregunta.getOpcion3() : "");
+                    psPregunta.setString(6, pregunta.getOpcion4() != null ? pregunta.getOpcion4() : "");
+                    psPregunta.setInt(7, pregunta.getRespuestaCorrecta());
+                    psPregunta.setInt(8, pregunta.getId());
+
+                    psPregunta.addBatch();
+                }
+
+                int[] results = psPregunta.executeBatch();
+                numPreguntasInsertadas = results.length;
+                System.out.println("Número de preguntas insertadas o actualizadas: " + numPreguntasInsertadas);
+            }
+
+            // Confirmar la transacción
+            con.commit();
+            return numPreguntasInsertadas == preguntas.size();
+        } catch (SQLException e) {
+            if (con != null) {
+                try {
+                    con.rollback();
+                } catch (SQLException rollbackEx) {
+                    rollbackEx.printStackTrace();
+                }
+            }
+            System.err.println("Error al actualizar el examen editado o las preguntas: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            if (con != null) {
+                try {
+                    con.setAutoCommit(true);
+                    con.close();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+    }
+
+
+    public boolean crearOActualizarExamenEditadoPorDocente(Examen examen, List<Pregunta> preguntas, int creadorId) {
+        String examenQuery = "INSERT INTO ExamenesEditadosPorDocentes (examen_id, titulo, fecha_hora_apertura, fecha_hora_cierre, descripcion, intentos, materia, clase_id, fecha_modificacion, creador_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?) " +
+                "ON DUPLICATE KEY UPDATE titulo = VALUES(titulo), fecha_hora_apertura = VALUES(fecha_hora_apertura), fecha_hora_cierre = VALUES(fecha_hora_cierre), descripcion = VALUES(descripcion), intentos = VALUES(intentos), materia = VALUES(materia), clase_id = VALUES(clase_id), fecha_modificacion = CURRENT_TIMESTAMP";
+
+        String preguntaQuery = "INSERT INTO PreguntasEditadasPorDocentes (examen_id, texto, opcion1, opcion2, opcion3, opcion4, respuesta_correcta, pregunta_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE texto = VALUES(texto), opcion1 = VALUES(opcion1), opcion2 = VALUES(opcion2), opcion3 = VALUES(opcion3), opcion4 = VALUES(opcion4), respuesta_correcta = VALUES(respuesta_correcta)";
+
+        Connection con = null;
+
+        try {
+            con = dataSource.getConnection();
+            con.setAutoCommit(false);
+
+            // Insertar o actualizar el examen
+            try (PreparedStatement psExamen = con.prepareStatement(examenQuery)) {
+                psExamen.setInt(1, examen.getId());
+                psExamen.setString(2, examen.getTitulo() != null ? examen.getTitulo() : null);
+                psExamen.setTimestamp(3, examen.getFechaHoraApertura() != null ? examen.getFechaHoraApertura() : null);
+                psExamen.setTimestamp(4, examen.getFechaHoraCierre() != null ? examen.getFechaHoraCierre() : null);
+                psExamen.setString(5, examen.getDescripcion() != null ? examen.getDescripcion() : null);
+                if (examen.getIntentos() != null) {
+                    psExamen.setInt(6, examen.getIntentos());
+                } else {
+                    psExamen.setNull(6, java.sql.Types.INTEGER);
+                }
+                psExamen.setString(7, examen.getMateria() != null ? examen.getMateria() : null);
+                psExamen.setInt(8, examen.getClaseId());
+                psExamen.setInt(9, creadorId);
+
+                psExamen.executeUpdate();
+            }
+
+            // Insertar o actualizar las preguntas asociadas
+            try (PreparedStatement psPregunta = con.prepareStatement(preguntaQuery)) {
+                for (Pregunta pregunta : preguntas) {
+                    psPregunta.setInt(1, examen.getId());
+                    psPregunta.setString(2, pregunta.getTexto() != null ? pregunta.getTexto() : null);
+                    psPregunta.setString(3, pregunta.getOpcion1() != null ? pregunta.getOpcion1() : null);
+                    psPregunta.setString(4, pregunta.getOpcion2() != null ? pregunta.getOpcion2() : null);
+                    psPregunta.setString(5, pregunta.getOpcion3() != null ? pregunta.getOpcion3() : null);
+                    psPregunta.setString(6, pregunta.getOpcion4() != null ? pregunta.getOpcion4() : null);
+                    psPregunta.setInt(7, pregunta.getRespuestaCorrecta());
+                    psPregunta.setInt(8, pregunta.getId());
+
+                    psPregunta.addBatch();
+                }
+
+                psPregunta.executeBatch();
+            }
+
+            con.commit();
+            return true;
+        } catch (SQLException e) {
+            if (con != null) {
+                try {
+                    con.rollback();
+                } catch (SQLException rollbackEx) {
+                    rollbackEx.printStackTrace();
+                }
+            }
+            System.err.println("Error al crear o actualizar el examen editado por el docente: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            if (con != null) {
+                try {
+                    con.setAutoCommit(true);
+                    con.close();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+    }
+
+
+    public boolean actualizarExamenDocente(Examen examen, List<Pregunta> preguntas, int creadorId, int claseId) {
+        Connection connection = null;
+        PreparedStatement insertExamenStmt = null;
+        PreparedStatement updateExamenStmt = null;
+        PreparedStatement deletePreguntasStmt = null;
+        PreparedStatement insertPreguntaStmt = null;
+        PreparedStatement checkClaseStmt = null;
+
+        String insertExamenSql = "INSERT INTO ExamenesEditadosPorDocentes (examen_id, titulo, descripcion, fecha_hora_apertura, fecha_hora_cierre, materia, intentos, clase_id, creador_id) " +
+                "SELECT id, ?, ?, ?, ?, ?, ?, ?, ? FROM examenes WHERE id = ?";
+        String updateExamenSql = "UPDATE ExamenesEditadosPorDocentes SET titulo = ?, descripcion = ?, fecha_hora_apertura = ?, fecha_hora_cierre = ?, materia = ?, intentos = ? WHERE examen_id = ?";
+        String deletePreguntasSql = "DELETE FROM PreguntasEditadasPorDocentes WHERE examen_id = ?";
+        String insertPreguntaSql = "INSERT INTO PreguntasEditadasPorDocentes (examen_id, clase_id, texto, opcion1, opcion2, opcion3, opcion4, respuesta_correcta, creador_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String checkClaseSql = "SELECT COUNT(*) FROM clases WHERE id = ?";
+
+        try {
+            connection = getConnection();
+            connection.setAutoCommit(false); // Iniciar transacción
+
+            // Verificar que el clase_id existe en la tabla 'clases'
+            checkClaseStmt = connection.prepareStatement(checkClaseSql);
+            checkClaseStmt.setInt(1, examen.getClaseId());
+            try (ResultSet rs = checkClaseStmt.executeQuery()) {
+                if (rs.next() && rs.getInt(1) == 0) {
+                    System.out.println("Error: 'clase_id' no existe en la tabla 'clases'.");
+                    connection.rollback();
+                    return false;
+                }
+            }
+
+            // Verifica si el examen ya existe en 'ExamenesEditadosPorDocentes'
+            boolean examenExiste = false;
+            PreparedStatement checkExamenStmt = connection.prepareStatement("SELECT COUNT(*) FROM ExamenesEditadosPorDocentes WHERE examen_id = ?");
+            checkExamenStmt.setInt(1, examen.getId());
+            try (ResultSet rs = checkExamenStmt.executeQuery()) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    examenExiste = true;
+                }
+            }
+
+            if (!examenExiste) {
+                System.out.println("Insertando nuevo examen en ExamenesEditadosPorDocentes...");
+                insertExamenStmt = connection.prepareStatement(insertExamenSql, Statement.RETURN_GENERATED_KEYS);
+                insertExamenStmt.setString(1, examen.getTitulo());
+                insertExamenStmt.setString(2, examen.getDescripcion());
+                insertExamenStmt.setTimestamp(3, examen.getFechaHoraApertura());
+                insertExamenStmt.setTimestamp(4, examen.getFechaHoraCierre());
+                insertExamenStmt.setString(5, examen.getMateria());
+                insertExamenStmt.setInt(6, examen.getIntentos());
+                insertExamenStmt.setInt(7, examen.getClaseId());
+                insertExamenStmt.setInt(8, creadorId);
+                insertExamenStmt.setInt(9, examen.getId());
+
+                int affectedRows = insertExamenStmt.executeUpdate();
+                System.out.println("Filas afectadas al insertar examen: " + affectedRows);
+
+                if (affectedRows == 0) {
+                    System.out.println("Rollback: No se insertó el examen.");
+                    connection.rollback();
+                    return false;
+                }
+
+                try (ResultSet generatedKeys = insertExamenStmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        examen.setId(generatedKeys.getInt(1));
+                        System.out.println("ID del examen generado: " + examen.getId());
+                    } else {
+                        System.out.println("Rollback: No se pudo obtener el ID generado.");
+                        connection.rollback();
+                        return false;
+                    }
+                }
+            } else {
+                System.out.println("Actualizando examen existente...");
+                updateExamenStmt = connection.prepareStatement(updateExamenSql);
+                updateExamenStmt.setString(1, examen.getTitulo());
+                updateExamenStmt.setString(2, examen.getDescripcion());
+                updateExamenStmt.setTimestamp(3, examen.getFechaHoraApertura());
+                updateExamenStmt.setTimestamp(4, examen.getFechaHoraCierre());
+                updateExamenStmt.setString(5, examen.getMateria());
+                updateExamenStmt.setInt(6, examen.getIntentos());
+                updateExamenStmt.setInt(7, examen.getId());
+
+                int examenRowsUpdated = updateExamenStmt.executeUpdate();
+                System.out.println("Filas afectadas al actualizar examen: " + examenRowsUpdated);
+
+                if (examenRowsUpdated == 0) {
+                    System.out.println("Rollback: No se actualizó el examen.");
+                    connection.rollback();
+                    return false;
+                }
+            }
+
+            System.out.println("Eliminando preguntas antiguas del examen editado...");
+            deletePreguntasStmt = connection.prepareStatement(deletePreguntasSql);
+            deletePreguntasStmt.setInt(1, examen.getId());
+            deletePreguntasStmt.executeUpdate();
+
+            System.out.println("Insertando nuevas preguntas...");
+            insertPreguntaStmt = connection.prepareStatement(insertPreguntaSql);
+            for (Pregunta pregunta : preguntas) {
+                insertPreguntaStmt.setInt(1, examen.getId());
+                insertPreguntaStmt.setInt(2, examen.getClaseId());
+                insertPreguntaStmt.setString(3, pregunta.getTexto());
+                insertPreguntaStmt.setString(4, pregunta.getOpcion1());
+                insertPreguntaStmt.setString(5, pregunta.getOpcion2());
+                insertPreguntaStmt.setString(6, pregunta.getOpcion3());
+                insertPreguntaStmt.setString(7, pregunta.getOpcion4());
+                insertPreguntaStmt.setInt(8, pregunta.getRespuestaCorrecta());
+                insertPreguntaStmt.setInt(9, creadorId);
+
+                insertPreguntaStmt.addBatch();
+            }
+            int[] batchResults = insertPreguntaStmt.executeBatch();
+            System.out.println("Resultados del batch de preguntas: " + batchResults.length);
+
+            connection.commit(); // Confirmar transacción
+            return true;
+
+        } catch (SQLException e) {
+            System.out.println("Error en la transacción, realizando rollback.");
+            e.printStackTrace();
+            if (connection != null) {
+                try {
+                    connection.rollback();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            return false;
+
+        } finally {
+            try {
+                if (insertExamenStmt != null) {
+                    insertExamenStmt.close();
+                }
+                if (updateExamenStmt != null) {
+                    updateExamenStmt.close();
+                }
+                if (deletePreguntasStmt != null) {
+                    deletePreguntasStmt.close();
+                }
+                if (insertPreguntaStmt != null) {
+                    insertPreguntaStmt.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    public Examen obtenerExamenEditadoPorId(int examenId) {
+        Examen examen = null;
+        String sql = "SELECT * FROM ExamenesEditadosPorDocente WHERE id = ?";
+
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, examenId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    examen = new Examen();
+                    examen.setId(rs.getInt("id"));
+                    examen.setTitulo(rs.getString("titulo"));
+                    examen.setDescripcion(rs.getString("descripcion"));
+                    // y así sucesivamente para los demás campos...
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return examen;
+    }
+
 }
+
 
 
 

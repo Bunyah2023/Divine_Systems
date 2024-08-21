@@ -2,6 +2,7 @@
 <%@ page import="java.util.List" %>
 <%@ page import="mx.edu.utez.sidex.dao.ExamenDao" %>
 <%@ page import="mx.edu.utez.sidex.model.Examen" %>
+<%@ page import="mx.edu.utez.sidex.model.User" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 
 <!DOCTYPE html>
@@ -33,6 +34,13 @@
             </thead>
             <tbody>
             <%
+                // Obtener el usuario actual de la sesión
+                User user = (User) session.getAttribute("user");
+                if (user == null) {
+                    response.sendRedirect("login.jsp");
+                    return;
+                }
+
                 ExamenDao examenDao = new ExamenDao();
                 List<Examen> examenes = examenDao.obtenerExamenes(null, null, null, null, null, null);
 
@@ -48,7 +56,17 @@
                 <td><%= examen.getFechaHoraCierre() != null ? sdf.format(examen.getFechaHoraCierre()) : "N/A" %></td>
                 <td><%= examen.getEstado() %></td>
                 <td>
-                    <a href="editarExamen.jsp?examenId=<%= examen.getId() %>&modo=almacen" class="btn btn-warning">Tomar</a>
+                    <%
+                        if (user.getRolId() == 2) { // Docente
+                    %>
+                    <a href="editarExamen.jsp?examenId=<%= examen.getId() %>&modo=almacen" class="btn btn-warning">Editar</a>
+                    <%
+                    } else { // Estudiante
+                    %>
+                    <a href="tomarExamen.jsp?examenId=<%= examen.getId() %>" class="btn btn-primary">Tomar</a>
+                    <%
+                        }
+                    %>
                 </td>
             </tr>
             <%
@@ -68,4 +86,6 @@
 
 </body>
 </html>
+
+
 

@@ -150,25 +150,29 @@ public class ClaseDao {
         return null;
     }
 
+
+
+
     private Clase extractClaseFromResultSet(ResultSet resultSet) throws SQLException {
-        return new Clase(
-                resultSet.getInt("id"),
-                resultSet.getString("nombre"),
-                resultSet.getString("descripcion"),
-                resultSet.getDate("fecha_inicio").toLocalDate(),
-                resultSet.getDate("fecha_fin").toLocalDate(),
-                resultSet.getDouble("minAU"),
-                resultSet.getDouble("maxAU"),
-                resultSet.getDouble("minDE"),
-                resultSet.getDouble("maxDE"),
-                resultSet.getDouble("minSA"),
-                resultSet.getDouble("maxSA"),
-                resultSet.getDouble("minNA"),
-                resultSet.getDouble("maxNA"),
-                resultSet.getString("codigo"),
-                resultSet.getInt("creador")
-        );
+        int id = resultSet.getInt("id");
+        String nombre = resultSet.getString("nombre");
+        String descripcion = resultSet.getString("descripcion");
+        LocalDate fechaInicio = resultSet.getDate("fecha_inicio").toLocalDate();
+        LocalDate fechaFin = resultSet.getDate("fecha_fin").toLocalDate();
+        double minAU = resultSet.getDouble("minAU");
+        double maxAU = resultSet.getDouble("maxAU");
+        double minDE = resultSet.getDouble("minDE");
+        double maxDE = resultSet.getDouble("maxDE");
+        double minSA = resultSet.getDouble("minSA");
+        double maxSA = resultSet.getDouble("maxSA");
+        double minNA = resultSet.getDouble("minNA");
+        double maxNA = resultSet.getDouble("maxNA");
+        String codigo = resultSet.getString("codigo");
+        int creador = resultSet.getInt("creador");
+
+        return new Clase(id, nombre, descripcion, fechaInicio, fechaFin, minAU, maxAU, minDE, maxDE, minSA, maxSA, minNA, maxNA, codigo, creador);
     }
+
 
     public Clase obtenerClasePorCodigo(String codigo) {
         Clase clase = null;

@@ -220,5 +220,43 @@ public class PreguntaDao {
         }
         return preguntas;
     }
+
+    // Método para obtener preguntas por el ID del examen editado
+    public List<Pregunta> obtenerPreguntasPorExamenEditadoId(int examenId) {
+        List<Pregunta> preguntas = new ArrayList<>();
+        String sql = "SELECT * FROM PreguntasEditadasPorDocentes WHERE examen_id = ?";
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, examenId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    List<String> opciones = new ArrayList<>();
+                    opciones.add(rs.getString("opcion1"));
+                    opciones.add(rs.getString("opcion2"));
+                    opciones.add(rs.getString("opcion3"));
+                    opciones.add(rs.getString("opcion4"));
+                    Collections.shuffle(opciones); // Mezclar opciones aleatoriamente
+
+                    Pregunta pregunta = new Pregunta(
+                            rs.getString("texto"),
+                            opciones.get(0),
+                            opciones.get(1),
+                            opciones.get(2),
+                            opciones.get(3),
+                            rs.getInt("respuesta_correcta"),
+                            rs.getInt("examen_id")
+                    );
+                    pregunta.setId(rs.getInt("id"));
+                    preguntas.add(pregunta);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al obtener preguntas por examen editado ID: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return preguntas;
+    }
+
 }
+
 

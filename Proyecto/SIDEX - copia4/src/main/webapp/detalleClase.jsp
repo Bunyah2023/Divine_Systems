@@ -35,9 +35,11 @@
             border-radius: 8px;
             background-color: #f9f9f9;
         }
+
         .historial-examenes h3 {
             margin-bottom: 15px;
         }
+
         .examen-historial {
             margin-bottom: 10px;
             padding: 10px;
@@ -46,27 +48,51 @@
             background-color: #fff;
             cursor: pointer;
         }
+
         .examen-historial:hover {
             background-color: #f1f1f1;
         }
+
         .examen-caducado {
             background-color: #ffdddd;
             cursor: not-allowed;
         }
+
         .resultados-examen p {
             margin: 5px 0;
         }
+
         .mensaje-no-examenes {
             text-align: center;
             font-weight: bold;
             color: #28a745;
             margin-top: 20px;
         }
+
+        /* Estilo para el botón de descarga de PDF */
+        .btn-pdf {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #dc3545; /* Rojo para destacar */
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-pdf:hover {
+            background-color: #c82333; /* Oscurecer un poco el rojo al pasar el cursor */
+        }
     </style>
 </head>
 <body class="froid">
 <header>
-    <div id="hamburger-menu">☰</div>
     <div id="sidebar" class="sidebar">
         <ul>
             <li><a href="index.jsp">Mis cursos</a></li>
@@ -124,26 +150,44 @@
         <div class="container">
             <%
                 String claseId = request.getParameter("claseId");
-                Clase clase = claseDao.obtenerClasePorId(Integer.parseInt(claseId));
+                Clase clase = null;
+
+                try {
+                    if (claseId != null && !claseId.trim().isEmpty()) {
+                        clase = claseDao.obtenerClasePorId(Integer.parseInt(claseId));
+                        session.setAttribute("claseId", claseId);
+                    } else {
+                        throw new NumberFormatException("El ID de clase es nulo o vacío.");
+                    }
+                } catch (NumberFormatException e) {
+                    response.sendRedirect("error.jsp?mensaje=ID de clase no válido.");
+                    return;
+                }
+
+                if (clase == null) {
+                    response.sendRedirect("error.jsp?mensaje=Clase no encontrada.");
+                    return;
+                }
+
                 ExamenDao examenDao = new ExamenDao();
                 ResultadoDao resultadoDao = new ResultadoDao();
                 Date now = new Date();
 
                 // Obtener exámenes pendientes (para estudiantes)
-                List<Examen> examenesPendientes = examenDao.obtenerExamenesPorClaseYEstado(Integer.parseInt(claseId), false);
+                List<Examen> examenesPendientes = examenDao.obtenerExamenesPorClaseYFechas(clase.getId());
 
                 // Obtener exámenes completados (para estudiantes)
-                List<Examen> examenesCompletados = examenDao.obtenerExamenesPorClaseYEstado(Integer.parseInt(claseId), true);
+                List<Examen> examenesCompletados = resultadoDao.obtenerExamenesCompletadosPorEstudianteYClase(usuario.getId(), clase.getId());
 
                 // Obtener historial de exámenes (para docentes)
-                List<Examen> examenesHistorial = examenDao.obtenerExamenesCerradosPorClase(Integer.parseInt(claseId));
-
-                // Obtener último examen editado por el docente
-                Examen ultimoExamenEditado = examenDao.obtenerUltimoExamenEditadoPorDocente(usuario.getId());
+                List<Examen> examenesHistorial = examenDao.obtenerExamenesCerradosPorClase(clase.getId());
 
                 // Obtener exámenes en curso (para docentes)
                 List<Examen> examenesEnCurso = examenDao.obtenerExamenesEnCursoPorDocente(usuario.getId());
+
+                System.out.println("Total exámenes en curso encontrados: " + examenesEnCurso.size());
             %>
+
             <div class="class-details">
                 <h1><%= clase.getNombre() %></h1>
                 <p><%= clase.getDescripcion() %></p>
@@ -162,41 +206,49 @@
                     <p class="mensaje-no-examenes">Yujuuu, no tienes exámenes pendientes</p>
                     <% } else { %>
                     <% for (Examen examen : examenesPendientes) {
-                        if (examen.getFechaHoraApertura() != null && examen.getFechaHoraCierre() != null &&
-                                now.after(examen.getFechaHoraApertura()) && now.before(examen.getFechaHoraCierre())) {
-                    %>
+                        System.out.println("Examen: " + examen.getTitulo());
+                        System.out.println("Fecha de Apertura: " + examen.getFechaHoraApertura());
+                        System.out.println("Fecha de Cierre: " + examen.getFechaHoraCierre());
+                        System.out.println("Fecha Actual: " + now);
+                        boolean esVigente = examen.getFechaHoraApertura() != null && examen.getFechaHoraCierre() != null &&
+                                now.after(examen.getFechaHoraApertura()) && now.before(examen.getFechaHoraCierre());
+                        System.out.println("Es vigente: " + esVigente);
+
+                        if (esVigente) { %>
                     <div class="exam">
-                        <p><%= examen.getTitulo() %> - <%= examen.getFechaHoraApertura() != null ? new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(examen.getFechaHoraApertura()) : "Fecha no disponible" %></p>
+                        <p><%= examen.getTitulo() %> - <%= new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(examen.getFechaHoraApertura()) %></p>
                         <button class="btn btn-primary" onclick="window.location.href='examen.jsp?examenId=<%= examen.getId() %>'">Tomar examen</button>
                     </div>
                     <% } else if (examen.getFechaHoraCierre() != null && now.after(examen.getFechaHoraCierre())) {
-                        examenDao.moverExamenAHistorial(examen.getId(), usuario.getId());
-                    %>
+                        examenDao.moverExamenAHistorial(examen.getId(), usuario.getId()); %>
                     <div class="exam examen-caducado tooltip">
                         <p><%= examen.getTitulo() %> - Examen Caducado</p>
                         <span class="tooltiptext">Examen ya caducado</span>
                     </div>
-                    <% } %>
-                    <% } %>
+                    <% }
+                    } %>
                     <% } %>
                 </div>
-                <h2>Exámenes completados</h2>
-                <div class="exam-results">
-                    <% for (Examen examen : examenesCompletados) { %>
-                    <div class="exam">
-                        <p><%= examen.getTitulo() %> - <%= examen.getFechaCierre() != null ? new java.text.SimpleDateFormat("dd/MM/yyyy").format(examen.getFechaCierre()) : "Fecha no disponible" %></p>
-                        <%
-                            Resultado resultado = resultadoDao.obtenerResultadoPorExamenYEstudiante(examen.getId(), usuario.getId());
-                        %>
-                        <div class="resultados-examen">
-                            <p>Calificación: <%= resultado.getCalificacion() %></p>
-                            <p>Aciertos: <%= resultado.getAciertos() %> / <%= resultado.getTotalPreguntas() %></p>
-                            <p>Respuestas Incorrectas: <%= resultado.getRespuestasIncorrectas() %></p>
-                            <p><%= resultado.getAprobado() ? "Aprobado" : "Reprobado" %></p>
-                        </div>
+            </div>
+            <% } %>
+
+            <% if (usuario.getRolId() == 1) { %> <!-- Estudiante -->
+            <h2>Exámenes completados</h2>
+            <div class="exam-results">
+                <% for (Examen examen : examenesCompletados) { %>
+                <div class="exam">
+                    <p><%= examen.getTitulo() %> - <%= examen.getFechaCierre() != null ? new java.text.SimpleDateFormat("dd/MM/yyyy").format(examen.getFechaCierre()) : "Fecha no disponible" %></p>
+                    <%
+                        Resultado resultado = resultadoDao.obtenerResultadoPorExamenYEstudiante(examen.getId(), usuario.getId());
+                    %>
+                    <div class="resultados-examen">
+                        <p>Calificación: <%= resultado.getCalificacion() %></p>
+                        <p>Aciertos: <%= resultado.getAciertos() %> / <%= resultado.getTotalPreguntas() %></p>
+                        <p>Respuestas Incorrectas: <%= resultado.getRespuestasIncorrectas() %></p>
+                        <p><%= resultado.getAprobado() ? "Aprobado" : "Reprobado" %></p>
                     </div>
-                    <% } %>
                 </div>
+                <% } %>
             </div>
             <% } else if (usuario.getRolId() == 2) { %> <!-- Docente -->
 
@@ -205,7 +257,7 @@
                 <p>Dentro del almacén puedes seleccionar un examen y aplicarlo a tus alumnos. Aquí podrás encontrar exámenes creados previamente por el coordinador.</p>
                 <button class="btn btn-primary" onclick="window.location.href='almacendeexamenes.jsp'">Almacén de Exámenes</button>
             </div>
-
+            <a href="${pageContext.request.contextPath}/pdf?id=<%= usuario.getId() %>&claseId=<%= claseId %>&role=docente" class="btn-pdf">Generar PDF</a>
             <div class="exam-section">
                 <h2>Exámenes en curso</h2>
                 <div class="exam-list">
@@ -220,22 +272,23 @@
                     <% } %>
                     <% } %>
                 </div>
-
-                <h2>Historial de exámenes</h2>
-                <div class="historial-examenes">
-                    <% for (Examen examen : examenesHistorial) {
-                        boolean caducado = examen.getFechaHoraCierre() != null && now.after(examen.getFechaHoraCierre());
-                    %>
-                    <div class="examen-historial <%= caducado ? "examen-caducado" : "" %>" data-examen-id="<%= examen.getId() %>">
-                        <p><%= examen.getTitulo() %> - <%= examen.getFechaHoraCierre() != null ? new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(examen.getFechaHoraCierre()) : "Fecha no disponible" %></p>
-                        <button class="btn btn-primary" onclick="window.location.href='editarExamen.jsp?examenId=<%= examen.getId() %>'">Editar Examen</button>
-                    </div>
-                    <% } %>
-                </div>
             </div>
-            <% } %>
+
+            <h2>Historial de exámenes</h2>
+            <div class="historial-examenes">
+                <% for (Examen examen : examenesHistorial) {
+                    boolean caducado = examen.getFechaHoraCierre() != null && now.after(examen.getFechaHoraCierre());
+                %>
+                <div class="examen-historial <%= caducado ? "examen-caducado" : "" %>" data-examen-id="<%= examen.getId() %>">
+                    <p><%= examen.getTitulo() %> - <%= examen.getFechaHoraCierre() != null ? new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(examen.getFechaHoraCierre()) : "Fecha no disponible" %></p>
+                    <button class="btn btn-primary" onclick="window.location.href='editarExamen.jsp?examenId=<%= examen.getId() %>'">Editar Examen</button>
+                </div>
+                <% } %>
+            </div>
         </div>
-    </main>
+            <% } %>
+</div>
+</main>
 </div>
 
 <!-- Modal de éxito -->
@@ -262,6 +315,7 @@
         examenesHistorial.forEach(function(examen) {
             examen.addEventListener('click', function() {
                 var examenId = examen.getAttribute('data-examen-id');
+                // Aquí puedes agregar la lógica para manejar el clic en un examen del historial
             });
         });
     });
@@ -269,3 +323,8 @@
 
 </body>
 </html>
+
+
+
+
+

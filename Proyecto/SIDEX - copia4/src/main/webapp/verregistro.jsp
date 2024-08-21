@@ -134,7 +134,8 @@
 
     <br>
     <h1>Generar Lista de usuarios</h1>
-    <form action="pdf" method="get">
+    <form action="pdf_admin" method="get">
+        <input type="hidden" name="id" value="<%= usuario.getId() %>"> <!-- Asumiendo que usuario es el usuario actualmente logueado -->
         <button type="submit" name="generate" value="true" class="btn btn-success">Generar PDF</button>
     </form>
 

@@ -13,15 +13,7 @@
 </head>
 <body class="froid">
 <header>
-    <div id="hamburger-menu">☰</div>
-    <div id="sidebar" class="sidebar">
-        <ul>
-            <li><a href="verregistro.jsp">Gestionar Usuarios</a></li>
-            <li><a href="#">Pendientes</a></li>
-            <li><a href="#">Exámenes</a></li>
-            <li><a href="#">Más...</a></li>
-        </ul>
-    </div>
+
 
     <div class="logo">
         <img id="logoDIVINESYSTEMS" src="IMG/LOGO SIDEX by DIVINE SYSTEMS.png" alt="DIVINE SYSTEMS">
@@ -39,6 +31,7 @@
         <span class="icon">🔍</span>
         <span class="icon">❓</span>
         <span class="icon">🔔</span>
+
         <div class="fotoPerfil">
             <a href="configurar_perfil.jsp">
                 <img src="IMG/PICTURE_PROFILE_DEFAULT.png" alt="Foto de perfil" class="user-info">
